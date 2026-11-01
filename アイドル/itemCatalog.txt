@@ -1,0 +1,16 @@
+name チェキ会の列, icon 📸, price 18, desc ファンサカードのバズ度が +0.5。, effect cheki
+name メンカラ衣装, icon 👗, price 24, desc ピンクのカードのアピールが2倍！, effect color
+name グループオリジナルペンライト, icon 🔦, price 20, desc 全カードのアピールが1.35倍。, effect light
+name バズ動画編集, icon 📱, price 26, desc 各ライブ最初のパフォーマンスが2倍スコア！, effect viral
+name 神対応マニュアル, icon 💌, price 21, desc ファンサカードのアピールが1.6倍。, effect service
+name 爆音コール講座, icon 📣, price 22, desc オタ芸カードを出すたび今回のライブ中バズ度が +0.35。, effect otage
+name 作詞ノート, icon 📝, price 23, desc 楽曲カードのアピールが1.5倍。, effect songpower
+name 拡散希望ハッシュタグ, icon #️⃣, price 25, desc 全カードのバズ度が1.2倍。, effect hashtag
+name ボイトレ個人レッスン, icon 🎙️, price 20, desc 楽曲カードのバズ度が +0.4。, effect voice
+name ファンレター保管箱, icon 💌, price 19, desc ファンサカードのアピールが1.5倍。, effect letter
+name 公式マフラータオル, icon 🧣, price 18, desc オタ芸カードのアピールが1.5倍。, effect towel
+name アンコール札, icon 🎫, price 24, desc ライブ最終ターンのアピールが1.7倍。, effect encore
+name 豪華ステージ照明, icon 🔆, price 26, desc 各パフォーマンスの最初のカードのアピールが1.4倍。, effect stage
+name 初披露ボーナス, icon 🌟, price 22, desc そのライブで初めて披露する楽曲のアピールが1.5倍。, effect firstsong
+name 全国ツアー協賛, icon 🚌, price 25, desc ライブ成功時の報酬が10円増える。, effect tour
+ 
