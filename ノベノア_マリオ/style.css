@@ -1,0 +1,293 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  background: #0c1220;
+  color: #f7f5ff;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(86, 66, 131, 0.22), transparent 55%),
+    #0c1220;
+}
+
+button {
+  font: inherit;
+}
+
+.game-shell {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 38px 0 24px;
+}
+
+.page-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0 2px 18px;
+}
+
+.eyebrow,
+.dialog-kicker {
+  margin: 0 0 8px;
+  color: #d3a8ff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.19em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.header-note,
+.page-footer {
+  color: #a7aec1;
+  font-size: 13px;
+}
+
+.header-note {
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 16px;
+}
+
+.music-toggle {
+  padding: 8px 13px;
+  border: 1px solid rgba(211, 168, 255, 0.4);
+  border-radius: 999px;
+  background: rgba(36, 34, 59, 0.85);
+  color: #eadbff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.music-toggle:hover {
+  border-color: #d3a8ff;
+  background: #34304f;
+}
+
+.music-toggle:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.game-frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(194, 179, 255, 0.24);
+  border-radius: 18px;
+  background: #222541;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.36), 0 0 50px rgba(114, 81, 182, 0.12);
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.dialog {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(13, 16, 31, 0.56);
+  backdrop-filter: blur(5px);
+}
+
+.dialog.is-hidden {
+  display: none;
+}
+
+.dialog-card {
+  width: min(430px, 100%);
+  padding: 31px 34px 30px;
+  border: 1px solid rgba(229, 216, 255, 0.2);
+  border-radius: 18px;
+  background: rgba(27, 29, 52, 0.95);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.38);
+  text-align: center;
+}
+
+.dialog-card h2 {
+  margin: 0 0 12px;
+  font-size: clamp(22px, 4vw, 29px);
+}
+
+.dialog-card > p:not(.dialog-kicker) {
+  margin: 0 auto 17px;
+  color: #c2c4d2;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.dialog-card .dialog-controls {
+  color: #e8e4f5;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 25px;
+  padding: 1px 6px;
+  border: 1px solid #5b5975;
+  border-radius: 5px;
+  background: #34334d;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+}
+
+.primary-button {
+  min-width: 174px;
+  padding: 12px 24px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #d7a9ff, #a887ff);
+  color: #201533;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 800;
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.primary-button:hover {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+}
+
+.primary-button:focus-visible,
+.touch-button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.touch-controls {
+  position: absolute;
+  right: 16px;
+  bottom: 15px;
+  left: 16px;
+  display: none;
+  align-items: end;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.direction-controls {
+  display: flex;
+  gap: 9px;
+}
+
+.touch-button {
+  width: 52px;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 14px;
+  background: rgba(20, 20, 42, 0.68);
+  color: #fff;
+  font-size: 23px;
+  font-weight: 700;
+  touch-action: none;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.jump-button {
+  width: 76px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+
+.page-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 3px 0;
+  font-size: 12px;
+}
+
+@media (pointer: coarse), (max-width: 700px) {
+  .touch-controls {
+    display: flex;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-actions {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .header-note {
+    font-size: 11px;
+  }
+
+  .music-toggle {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 640px) {
+  .game-shell {
+    width: calc(100% - 20px);
+    padding-top: 21px;
+  }
+
+  .page-header {
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .header-note {
+    margin-top: 7px;
+    font-size: 12px;
+  }
+
+  .game-frame {
+    border-radius: 12px;
+  }
+
+  .dialog {
+    padding: 10px;
+  }
+
+  .dialog-card {
+    padding: 20px 18px;
+  }
+
+  .dialog-card > p:not(.dialog-kicker) {
+    margin-bottom: 10px;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .page-footer span:last-child {
+    display: none;
+  }
+}
