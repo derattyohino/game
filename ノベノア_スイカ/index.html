@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11142b">
+  <title>ノベルノアのしずく</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background: #11142b;
+      color: #f7f5ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 28px 16px;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(108, 80, 175, .28), transparent 55%),
+        #11142b;
+    }
+
+    button { font: inherit; }
+
+    .game {
+      width: min(100%, 480px);
+      margin: 0 auto;
+    }
+
+    header { text-align: center; margin-bottom: 18px; }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: #b6a9ec;
+      font-size: .75rem;
+      letter-spacing: .22em;
+    }
+
+    h1 { margin: 0; font-size: clamp(1.65rem, 7vw, 2.25rem); letter-spacing: .08em; }
+
+    .subtitle { margin: 8px 0 0; color: #b7bad3; font-size: .87rem; }
+
+    .hud {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .score-card, .next-card {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 14px;
+      border: 1px solid rgba(201, 188, 255, .18);
+      border-radius: 14px;
+      background: rgba(32, 35, 67, .82);
+    }
+
+    .score-card { flex: 1; justify-content: space-between; }
+    .label { color: #aaaecb; font-size: .75rem; }
+    .score { font-size: 1.35rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .next-card { min-width: 126px; justify-content: space-between; }
+    .next-name { color: #fff; font-weight: 700; }
+
+    .board-wrap {
+      position: relative;
+      width: min(100%, 240px);
+      margin: 0 auto;
+      overflow: hidden;
+      border: 2px solid rgba(196, 177, 255, .42);
+      border-radius: 20px;
+      background: linear-gradient(180deg, #202344 0%, #171a35 100%);
+      box-shadow: 0 18px 55px rgba(0, 0, 0, .3), inset 0 0 28px rgba(151, 127, 235, .06);
+    }
+
+    canvas { display: block; width: 100%; height: auto; touch-action: manipulation; }
+
+    .game-over {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+      background: rgba(12, 14, 31, .82);
+      backdrop-filter: blur(5px);
+    }
+
+    .game-over[hidden] { display: none; }
+    .game-over strong { font-size: 1.8rem; }
+    .game-over span { color: #c3c4d9; }
+
+    .actions { display: flex; gap: 10px; margin-top: 12px; }
+
+    .actions button, .game-over button {
+      min-height: 48px;
+      border: 0;
+      border-radius: 13px;
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    #drop-button {
+      flex: 1;
+      background: linear-gradient(135deg, #8c6bea, #6548c7);
+      box-shadow: 0 7px 20px rgba(105, 75, 206, .28);
+    }
+
+    #restart-button, .game-over button { padding: 0 18px; background: #303454; }
+    button:active { transform: translateY(1px); }
+    button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+    .hint { margin: 10px 0 0; text-align: center; color: #a7aac5; font-size: .78rem; }
+
+    .music-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      padding: 10px 13px;
+      border: 1px solid rgba(201, 188, 255, .14);
+      border-radius: 14px;
+      background: rgba(32, 35, 67, .6);
+    }
+
+    .music-controls button {
+      min-height: 40px;
+      padding: 0 13px;
+      border: 1px solid rgba(201, 188, 255, .24);
+      border-radius: 11px;
+      background: #303454;
+      color: #fff;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .volume-control {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      gap: 9px;
+      color: #b7bad3;
+      font-size: .75rem;
+    }
+
+    .volume-control input { width: 100%; accent-color: #a78bfa; }
+
+    .guide {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid rgba(201, 188, 255, .14);
+      border-radius: 16px;
+      background: rgba(32, 35, 67, .6);
+    }
+
+    .guide h2 { margin: 0 0 10px; font-size: .85rem; color: #d3c9ff; }
+    .branches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .branch { min-width: 0; text-align: center; }
+    .branch span { display: block; font-size: .68rem; color: #c0c2d7; line-height: 1.55; }
+    .swatch { width: 14px; height: 14px; margin: 0 auto 5px; border: 2px solid; border-radius: 50%; }
+    .final-hint { margin: 11px 0 0; color: #b7bad3; font-size: .75rem; text-align: center; }
+
+    @media (max-width: 380px) {
+      body { padding-inline: 10px; }
+      .score-card, .next-card { padding-inline: 10px; }
+      .branches { gap: 3px; }
+      .branch span { font-size: .61rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <header>
+      <p class="eyebrow">NOVEL NOA · DROP & MERGE</p>
+      <h1>ノベルノアのしずく</h1>
+      <p class="subtitle">しずくを育てて、5人の名前をつなげよう。</p>
+    </header>
+
+    <section class="hud" aria-label="ゲーム情報">
+      <div class="score-card">
+        <span class="label">SCORE</span>
+        <span class="score" id="score">0</span>
+      </div>
+      <div class="next-card">
+        <span class="label">つぎ</span>
+        <span class="next-name" id="next-name">さ</span>
+      </div>
+    </section>
+
+    <div class="board-wrap">
+      <canvas id="board" width="420" height="620" aria-label="クリックした位置にしずくを落とす盤面"></canvas>
+      <div class="game-over" id="game-over" hidden>
+        <strong>おっとっと！</strong>
+        <span>しずくがいっぱいになっちゃった</span>
+        <button id="game-over-restart" type="button">もう一度あそぶ</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="drop-button" type="button">ここに落とす</button>
+      <button id="restart-button" type="button">リスタート</button>
+    </div>
+    <p class="hint">盤面をクリックして落下位置を選択。← → で調整、Space / ↓ で落とせます</p>
+    <div class="music-controls" aria-label="BGM設定">
+      <button id="music-toggle" type="button" aria-pressed="false">♪ BGMを再生</button>
+      <label class="volume-control" for="music-volume">
+        音量
+        <input id="music-volume" type="range" min="0" max="100" value="28">
+      </label>
+    </div>
+
+    <section class="guide" aria-label="進化のヒント">
+      <h2>5つの進化ルート</h2>
+      <div class="branches">
+        <div class="branch"><div class="swatch" style="border-color:#68e4ed"></div><span>さ → さた<br>→ さたん</span></div>
+        <div class="branch"><div class="swatch" style="border-color:#c39bff"></div><span>な → なな → ななせ<br>→ ななせこ → ななせこゆ<br>→ 七瀬こゆる</span></div>
+        <div class="branch"><div class="swatch" style="border-color:#ff687b"></div><span>ほ → ほし → ほしの<br>→ ほしのさ<br>→ 星野さゆ</span></div>
+        <div class="branch"><div class="swatch" style="border-color:#ff92ce"></div><span>と → とに → とにか<br>→ とにかく → とにかくあ<br>→ 兎ニ角あう</span></div>
+        <div class="branch"><div class="swatch" style="border-color:#fff"></div><span>ま → まし → ましろ<br>→ ましろも<br>→ 茉白もも</span></div>
+      </div>
+      <p class="final-hint">5人の名前がつながると「ノベルノア」に！</p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById("board");
+      const ctx = canvas.getContext("2d");
+      const scoreDisplay = document.getElementById("score");
+      const nextName = document.getElementById("next-name");
+      const gameOverPanel = document.getElementById("game-over");
+      const musicToggle = document.getElementById("music-toggle");
+      const musicVolume = document.getElementById("music-volume");
+
+      const branches = [
+        { color: "#68e4ed", stages: ["さ", "さた", "さたん"], final: "さたん" },
+        { color: "#c39bff", stages: ["な", "なな", "ななせ", "ななせこ", "ななせこゆ", "七瀬こゆる"], final: "七瀬こゆる" },
+        { color: "#ff687b", stages: ["ほ", "ほし", "ほしの", "ほしのさ", "星野さゆ"], final: "星野さゆ" },
+        { color: "#ff92ce", stages: ["と", "とに", "とにか", "とにかく", "とにかくあ", "兎二角あう"], final: "兎二角あう" },
+        { color: "#fff", stages: ["ま", "まし", "ましろ", "ましろも", "茉白もも"], final: "茉白もも" }
+      ];
+      const radiusFor = (level) => 20 + level * 4.1;
+      const floorY = canvas.height - 17;
+      const entities = [];
+      let score = 0;
+      let currentBranch = 0;
+      let nextBranch = 0;
+      let gameOver = false;
+      let lastTime = 0;
+      let mergeLock = 0;
+      let nextId = 0;
+      let dropX = canvas.width / 2;
+      let audioContext = null;
+      let masterGain = null;
+      let musicTimer = null;
+      let musicPlaying = false;
+      let musicStartTime = 0;
+      let musicBarIndex = 0;
+
+      const beatDuration = 60 / 82;
+      const chordProgression = [
+        [261.63, 329.63, 392.00],
+        [196.00, 246.94, 293.66],
+        [220.00, 261.63, 329.63],
+        [174.61, 220.00, 261.63]
+      ];
+      const melody = [
+        523.25, 659.25, 783.99, 659.25, 587.33, 659.25, 523.25, 392.00,
+        440.00, 523.25, 659.25, 523.25, 392.00, 440.00, 523.25, null
+      ];
+
+      function playTone(frequency, start, duration, volume, type, attack, release) {
+        const oscillator = audioContext.createOscillator();
+        const envelope = audioContext.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, start);
+        envelope.gain.setValueAtTime(0, start);
+        envelope.gain.linearRampToValueAtTime(volume, start + attack);
+        envelope.gain.setValueAtTime(volume, start + duration - release);
+        envelope.gain.linearRampToValueAtTime(0, start + duration);
+        oscillator.connect(envelope);
+        envelope.connect(masterGain);
+        oscillator.start(start);
+        oscillator.stop(start + duration + 0.02);
+      }
+
+      function scheduleMusicBar() {
+        if (!musicPlaying || !audioContext) return;
+        const barDuration = beatDuration * 4;
+        const barIndex = musicBarIndex++;
+        const start = Math.max(audioContext.currentTime + 0.05, musicStartTime + barIndex * barDuration);
+        const chord = chordProgression[barIndex % chordProgression.length];
+        chord.forEach((frequency) => {
+          playTone(frequency / 2, start, barDuration * 1.05, 0.04, "sine", 0.5, 0.6);
+          playTone(frequency, start, barDuration * 1.05, 0.016, "sine", 0.55, 0.6);
+        });
+        for (let step = 0; step < 8; step++) {
+          const note = melody[(barIndex * 8 + step) % melody.length];
+          if (note) {
+            playTone(note, start + step * beatDuration / 2, beatDuration * 0.82, 0.035, "triangle", 0.025, 0.2);
+          }
+        }
+        for (let beat = 0; beat < 4; beat++) {
+          const note = chord[beat % chord.length] * 2;
+          playTone(note, start + beat * beatDuration, beatDuration * 0.4, 0.012, "triangle", 0.015, 0.12);
+        }
+        musicTimer = window.setTimeout(scheduleMusicBar, barDuration * 1000);
+      }
+
+      async function setMusicPlaying(shouldPlay) {
+        if (shouldPlay) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) {
+            musicToggle.textContent = "このブラウザーでは再生できません";
+            musicToggle.disabled = true;
+            return;
+          }
+          if (!audioContext || audioContext.state === "closed") {
+            audioContext = new AudioContextClass();
+            masterGain = audioContext.createGain();
+            masterGain.gain.value = Number(musicVolume.value) / 100;
+            masterGain.connect(audioContext.destination);
+          }
+          await audioContext.resume();
+          masterGain.gain.setTargetAtTime(Number(musicVolume.value) / 100, audioContext.currentTime, 0.08);
+          musicPlaying = true;
+          musicStartTime = audioContext.currentTime + 0.1;
+          musicBarIndex = 0;
+          scheduleMusicBar();
+        } else {
+          musicPlaying = false;
+          window.clearTimeout(musicTimer);
+          if (audioContext && audioContext.state !== "closed") {
+            masterGain.gain.setTargetAtTime(0, audioContext.currentTime, 0.08);
+          }
+        }
+        musicToggle.textContent = musicPlaying ? "♪ BGMを停止" : "♪ BGMを再生";
+        musicToggle.setAttribute("aria-pressed", String(musicPlaying));
+      }
+
+      musicToggle.addEventListener("click", () => {
+        setMusicPlaying(!musicPlaying).catch((error) => {
+          console.error("BGMの再生に失敗しました。", error);
+          musicToggle.textContent = "BGMを再生できません";
+        });
+      });
+
+      musicVolume.addEventListener("input", () => {
+        if (audioContext && masterGain && musicPlaying) {
+          masterGain.gain.setTargetAtTime(Number(musicVolume.value) / 100, audioContext.currentTime, 0.08);
+        }
+      });
+
+      function chooseBranch() {
+        return Math.floor(Math.random() * branches.length);
+      }
+
+      function updateNextLabel() {
+        nextName.textContent = branches[nextBranch].stages[0];
+      }
+
+      function reset() {
+        entities.length = 0;
+        score = 0;
+        gameOver = false;
+        mergeLock = 0;
+        scoreDisplay.textContent = "0";
+        gameOverPanel.hidden = true;
+        dropX = canvas.width / 2;
+        currentBranch = chooseBranch();
+        nextBranch = chooseBranch();
+        updateNextLabel();
+      }
+
+      function setDropX(x) {
+        const radius = radiusFor(0);
+        dropX = Math.max(radius + 4, Math.min(canvas.width - radius - 4, x));
+      }
+
+      function drop() {
+        if (gameOver) return;
+        const branch = branches[currentBranch];
+        const radius = radiusFor(0);
+        entities.push({
+          id: nextId++,
+          branch: currentBranch,
+          level: 0,
+          x: dropX,
+          y: radius + 7,
+          vx: 0,
+          vy: 0,
+          radius,
+          born: performance.now()
+        });
+        currentBranch = nextBranch;
+        nextBranch = chooseBranch();
+        updateNextLabel();
+      }
+
+      function merge(left, right) {
+        if (left.merged || right.merged || left.branch !== right.branch || left.level !== right.level) return false;
+        const branch = branches[left.branch];
+        if (left.level >= branch.stages.length - 1) return false;
+        left.merged = true;
+        right.merged = true;
+        const level = left.level + 1;
+        const radius = radiusFor(level);
+        entities.push({
+          id: nextId++,
+          branch: left.branch,
+          level,
+          x: (left.x + right.x) / 2,
+          y: (left.y + right.y) / 2,
+          vx: (left.vx + right.vx) / 2,
+          vy: Math.min((left.vy + right.vy) / 2 - 2.4, -2.4),
+          radius,
+          born: performance.now()
+        });
+        score += (level + 1) * 10;
+        scoreDisplay.textContent = String(score);
+        return true;
+      }
+
+      function makeNovelNoa(group) {
+        const x = group.reduce((sum, item) => sum + item.x, 0) / group.length;
+        const y = group.reduce((sum, item) => sum + item.y, 0) / group.length;
+        for (const item of group) item.merged = true;
+        entities.push({
+          id: nextId++,
+          branch: -1,
+          level: 0,
+          x,
+          y,
+          vx: 0,
+          vy: -3.2,
+          radius: 39,
+          born: performance.now()
+        });
+        score += 500;
+        scoreDisplay.textContent = String(score);
+      }
+
+      function mergeFiveFinalNames() {
+        const finals = entities.filter((item) =>
+          !item.merged && item.branch >= 0 &&
+          item.level === branches[item.branch].stages.length - 1
+        );
+        const visited = new Set();
+        for (const start of finals) {
+          if (visited.has(start.id)) continue;
+          const cluster = [];
+          const stack = [start];
+          const kinds = new Set();
+          visited.add(start.id);
+          while (stack.length) {
+            const item = stack.pop();
+            cluster.push(item);
+            kinds.add(item.branch);
+            for (const other of finals) {
+              if (visited.has(other.id)) continue;
+              const distance = Math.hypot(item.x - other.x, item.y - other.y);
+              if (distance <= item.radius + other.radius + 3) {
+                visited.add(other.id);
+                stack.push(other);
+              }
+            }
+          }
+          if (kinds.size === branches.length) {
+            makeNovelNoa(cluster);
+            return;
+          }
+        }
+      }
+
+      function physics(delta) {
+        const step = Math.min(delta / 16.67, 2);
+        for (const item of entities) {
+          if (item.merged) continue;
+          item.vy += 0.34 * step;
+          item.x += item.vx * step;
+          item.y += item.vy * step;
+          item.vx *= Math.pow(0.995, step);
+          item.vy = Math.min(item.vy, 13);
+          if (item.x - item.radius < 4) {
+            item.x = item.radius + 4;
+            item.vx = Math.max(0, item.vx * -0.22);
+          }
+          if (item.x + item.radius > canvas.width - 4) {
+            item.x = canvas.width - item.radius - 4;
+            item.vx = Math.min(0, item.vx * -0.22);
+          }
+          if (item.y + item.radius > floorY) {
+            item.y = floorY - item.radius;
+            item.vy = Math.max(0, item.vy * -0.18);
+          }
+        }
+
+        if (mergeLock > 0) {
+          mergeLock -= delta;
+        } else {
+          outer: for (let i = 0; i < entities.length; i++) {
+            const left = entities[i];
+            if (left.merged) continue;
+            for (let j = i + 1; j < entities.length; j++) {
+              const right = entities[j];
+              if (right.merged) continue;
+              const dx = right.x - left.x;
+              const dy = right.y - left.y;
+              const distance = Math.hypot(dx, dy) || 0.001;
+              const overlap = left.radius + right.radius - distance;
+              if (overlap > 0) {
+                const nx = dx / distance;
+                const ny = dy / distance;
+                const separation = overlap * 0.52;
+                left.x -= nx * separation;
+                left.y -= ny * separation;
+                right.x += nx * separation;
+                right.y += ny * separation;
+                if (merge(left, right)) {
+                  mergeLock = 85;
+                  break outer;
+                }
+                const relativeVelocity = (right.vx - left.vx) * nx + (right.vy - left.vy) * ny;
+                if (relativeVelocity < 0) {
+                  const impulse = relativeVelocity * 0.18;
+                  left.vx += impulse * nx;
+                  left.vy += impulse * ny;
+                  right.vx -= impulse * nx;
+                  right.vy -= impulse * ny;
+                }
+              }
+            }
+          }
+        }
+        mergeFiveFinalNames();
+        for (let i = entities.length - 1; i >= 0; i--) {
+          if (entities[i].merged) entities.splice(i, 1);
+        }
+
+        if (entities.some((item) => item.y - item.radius < 38 && performance.now() - item.born > 1200)) {
+          gameOver = true;
+          gameOverPanel.hidden = false;
+        }
+      }
+
+      function drawText(item, text) {
+        const isFinal = item.branch >= 0 && item.level === branches[item.branch].stages.length - 1;
+        const lines = item.branch === -1 ? ["ノベル", "ノア"] :
+          isFinal && text.length >= 4 ? [text.slice(0, Math.ceil(text.length / 2)), text.slice(Math.ceil(text.length / 2))] :
+          [text];
+        const fontFamily = '"Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif';
+        let fontSize = Math.min(32, item.radius * (lines.length === 1 ? 1.9 : 1.15));
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = `700 ${fontSize}px ${fontFamily}`;
+        while (lines.some((line) => ctx.measureText(line).width > item.radius * 1.9) && fontSize > 8) {
+          fontSize -= 1;
+          ctx.font = `700 ${fontSize}px ${fontFamily}`;
+        }
+        const lineHeight = fontSize * 1.12;
+        lines.forEach((line, index) => {
+          const y = (index - (lines.length - 1) / 2) * lineHeight;
+          ctx.fillText(line, 0, y);
+        });
+      }
+
+      function drawEntity(item, time) {
+        const branch = item.branch === -1 ? null : branches[item.branch];
+        const color = branch ? branch.color : "#4da3ff";
+        const stage = branch ? branch.stages[item.level] : "ノベルノア";
+        const pulse = time - item.born < 240 ? 1 + Math.sin((time - item.born) / 240 * Math.PI) * 0.08 : 1;
+        ctx.save();
+        ctx.translate(item.x, item.y);
+        ctx.scale(pulse, pulse);
+        ctx.beginPath();
+        ctx.arc(0, 0, item.radius, 0, Math.PI * 2);
+        const fill = ctx.createRadialGradient(-item.radius * .35, -item.radius * .4, 2, 0, 0, item.radius);
+        fill.addColorStop(0, "#42466f");
+        fill.addColorStop(1, "#262a4c");
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.lineWidth = item.level === 0 ? 2 : 3;
+        ctx.strokeStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = item.level > 0 || item.branch === -1 ? 12 : 5;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#fff";
+        drawText(item, stage);
+        ctx.restore();
+      }
+
+      function draw(time) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.setLineDash([6, 7]);
+        ctx.strokeStyle = "rgba(255,255,255,.18)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(4, 38);
+        ctx.lineTo(canvas.width - 4, 38);
+        ctx.stroke();
+        ctx.restore();
+
+        const previewRadius = radiusFor(0);
+        const color = branches[currentBranch].color;
+        ctx.beginPath();
+        ctx.moveTo(dropX, 7);
+        ctx.lineTo(dropX, floorY);
+        ctx.strokeStyle = "rgba(196,177,255,.3)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 6]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(dropX, previewRadius + 7, previewRadius, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(38,42,76,.72)";
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = "#fff";
+        ctx.font = '700 26px "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif';
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(branches[currentBranch].stages[0], dropX, previewRadius + 7);
+
+        ctx.beginPath();
+        ctx.moveTo(9, 8);
+        ctx.lineTo(9, floorY);
+        ctx.strokeStyle = "rgba(196,177,255,.16)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        for (const item of entities) drawEntity(item, time);
+      }
+
+      function frame(time) {
+        const delta = lastTime ? time - lastTime : 16.67;
+        lastTime = time;
+        if (!gameOver) physics(delta);
+        draw(time);
+        requestAnimationFrame(frame);
+      }
+
+      document.getElementById("drop-button").addEventListener("click", drop);
+      document.getElementById("restart-button").addEventListener("click", reset);
+      document.getElementById("game-over-restart").addEventListener("click", reset);
+      canvas.addEventListener("pointermove", (event) => {
+        const bounds = canvas.getBoundingClientRect();
+        setDropX((event.clientX - bounds.left) * canvas.width / bounds.width);
+      });
+      canvas.addEventListener("click", (event) => {
+        const bounds = canvas.getBoundingClientRect();
+        setDropX((event.clientX - bounds.left) * canvas.width / bounds.width);
+        drop();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.target instanceof HTMLElement && event.target.closest("button, input, select, textarea")) return;
+        if (event.code === "ArrowLeft" || event.code === "ArrowRight") {
+          event.preventDefault();
+          setDropX(dropX + (event.code === "ArrowLeft" ? -24 : 24));
+        } else if ((event.code === "Space" || event.code === "ArrowDown") && !event.repeat) {
+          event.preventDefault();
+          drop();
+        }
+      });
+
+      reset();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>
