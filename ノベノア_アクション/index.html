@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11142b">
+  <title>開演まであと少し！— 新宿ラン</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background: #101329;
+      color: #fff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(86, 74, 153, .38), transparent 58%),
+        #101329;
+    }
+
+    .game-shell { width: min(100%, 1040px); }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0 2px 12px;
+    }
+
+    .brand {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(17px, 3vw, 23px);
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+
+    .brand span { color: #ff83bc; }
+
+    .sound-button, .action-button, .touch-controls button {
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .sound-button {
+      padding: 9px 13px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+    }
+
+    .screen {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 20px;
+      background: #f9b9a2;
+      box-shadow: 0 24px 80px rgba(0,0,0,.4);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: linear-gradient(90deg, rgba(15,17,40,.82), rgba(15,17,40,.45));
+      text-align: center;
+    }
+
+    .overlay[hidden] { display: none; }
+
+    .dialog {
+      width: min(100%, 510px);
+      padding: clamp(20px, 4vw, 34px);
+      border: 1px solid rgba(255,255,255,.23);
+      border-radius: 20px;
+      background: rgba(21,23,48,.84);
+      box-shadow: 0 16px 50px rgba(0,0,0,.28);
+      backdrop-filter: blur(8px);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: #ff9ac9;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .14em;
+    }
+
+    .dialog h2 {
+      margin: 0 0 10px;
+      font-size: clamp(24px, 5vw, 38px);
+      line-height: 1.25;
+    }
+
+    .dialog p {
+      margin: 0 auto 18px;
+      color: #e4e3f0;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .action-button {
+      min-width: 190px;
+      padding: 13px 22px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(100deg, #ff65a8, #ff9b72);
+      box-shadow: 0 7px 22px rgba(255,101,168,.28);
+      font-size: 16px;
+    }
+
+    .action-button:hover { filter: brightness(1.08); }
+    .action-button:focus-visible, .sound-button:focus-visible, .touch-controls button:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 3px;
+    }
+
+    .help {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 4px 0;
+      color: #bbbcd1;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .help strong { color: #f6f2ff; }
+    .touch-controls { display: none; gap: 8px; }
+
+    .touch-controls button {
+      padding: 9px 13px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.1);
+      touch-action: none;
+    }
+
+    @media (max-width: 620px) {
+      body { padding: 12px; }
+      .screen { border-radius: 14px; }
+      .help { flex-direction: column; }
+      .touch-controls { display: flex; }
+      .help-copy { display: none; }
+      .overlay { padding: 12px; }
+      .dialog { padding: 17px; }
+      .dialog p { margin-bottom: 12px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+    <header class="topbar">
+      <h1 class="brand">開演まであと少し！ <span>— 新宿ラン</span></h1>
+      <button class="sound-button" id="soundButton" type="button" aria-pressed="true">♪ BGM ON</button>
+    </header>
+    <section class="screen" aria-label="新宿からライブハウスWALLYを目指すゲーム">
+      <canvas id="game" width="960" height="540" aria-label="ゲーム画面"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="dialog">
+          <p class="eyebrow">SHINJUKU → WALLY</p>
+          <h2 id="overlayTitle">出番に間に合え！</h2>
+          <p id="overlayText">新宿駅からライブハウスWALLYまで、全力ダッシュ！<br>コーン・段差・階段をジャンプでよけて、出演パスを集めよう。</p>
+          <button class="action-button" id="startButton" type="button">ライブへ急ぐ！</button>
+        </div>
+      </div>
+    </section>
+    <footer class="help">
+      <span class="help-copy"><strong>← →</strong> 移動　 <strong>↑ / Space</strong> ジャンプ</span>
+      <span class="help-copy">制限時間内にWALLYへ到着しよう！</span>
+      <div class="touch-controls" aria-label="タッチ操作">
+        <button type="button" data-key="ArrowLeft">←</button>
+        <button type="button" data-key="ArrowRight">→</button>
+        <button type="button" data-key="ArrowUp">ジャンプ</button>
+      </div>
+    </footer>
+  </main>
+  <script>
+    (() => {
+      const canvas = document.querySelector("#game");
+      const ctx = canvas.getContext("2d");
+      const overlay = document.querySelector("#overlay");
+      const overlayTitle = document.querySelector("#overlayTitle");
+      const overlayText = document.querySelector("#overlayText");
+      const startButton = document.querySelector("#startButton");
+      const soundButton = document.querySelector("#soundButton");
+      const width = canvas.width;
+      const height = canvas.height;
+      const ground = 414;
+      const courseLength = 9100;
+      const characterHeight = 142;
+      const characterHitboxWidth = characterHeight * 117 / 247;
+      const characterRunWidth = characterHeight * 148 / 235;
+      const characterSlotWidth = Math.max(characterHitboxWidth, characterRunWidth);
+      const assetBase = new URL(".", document.baseURI);
+      const images = {
+        idle: loadImage("pic/momo-transparent.png?v=3"),
+        run: loadImage("pic/run/momo_run-transparent.png?v=3")
+      };
+      const keys = new Set();
+      const obstacles = [];
+      const pickups = [];
+      let state = "ready";
+      let lastTime = 0;
+      let elapsed = 0;
+      let distance = 0;
+      let scroll = 0;
+      let obstacleTimer = 1.1;
+      let pickupTimer = 2.2;
+      let soundEnabled = true;
+      let audioContext;
+      let melodyTimer;
+      let melodyIndex = 0;
+      let flash = 0;
+      const player = { x: 150, y: ground, vy: 0, grounded: true, wallSupport: null, lives: 3, score: 0, invincible: 0 };
+
+      function loadImage(src) {
+        const image = new Image();
+        image.src = new URL(src, assetBase).href;
+        image.addEventListener("error", () => console.error(`画像を読み込めません: ${src}`));
+        return image;
+      }
+
+      function roundedRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, r);
+      }
+
+      function drawBackground() {
+        const sky = ctx.createLinearGradient(0, 0, 0, height);
+        sky.addColorStop(0, "#f7a7a5");
+        sky.addColorStop(.52, "#ffc9a9");
+        sky.addColorStop(1, "#f7ddbc");
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.fillStyle = "rgba(255,244,198,.72)";
+        ctx.beginPath();
+        ctx.arc(760, 116, 49, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#b87592";
+        for (let i = 0; i < 9; i++) {
+          const x = ((i * 167 - scroll * .16) % (width + 200) + width + 200) % (width + 200) - 100;
+          const h = 105 + (i % 4) * 20;
+          ctx.fillRect(x, 245 - h, 100 + (i % 3) * 16, h);
+          ctx.fillStyle = "#f4b39f";
+          ctx.fillRect(x + 11, 253 - h, 7, h - 10);
+          ctx.fillRect(x + 31, 253 - h, 7, h - 10);
+          ctx.fillRect(x + 53, 253 - h, 7, h - 10);
+          ctx.fillStyle = "#b87592";
+        }
+
+        drawStationSign();
+        drawBuildings();
+        ctx.fillStyle = "#413d58";
+        ctx.fillRect(0, 306, width, 108);
+        ctx.fillStyle = "#514a63";
+        ctx.fillRect(0, 306, width, 10);
+        ctx.fillStyle = "#f6d5aa";
+        for (let i = 0; i < 20; i++) {
+          const x = ((i * 86 - scroll * .88) % (width + 86) + width + 86) % (width + 86) - 86;
+          ctx.fillRect(x, 338 + (i % 2) * 17, 40, 4);
+        }
+        ctx.fillStyle = "#37344c";
+        ctx.fillRect(0, ground, width, height - ground);
+        ctx.fillStyle = "#f2c77f";
+        ctx.fillRect(0, ground, width, 5);
+        ctx.fillStyle = "rgba(255,255,255,.16)";
+        for (let i = 0; i < 8; i++) {
+          const x = ((i * 160 - scroll * 1.3) % (width + 160) + width + 160) % (width + 160) - 160;
+          ctx.fillRect(x, 478, 78, 4);
+        }
+      }
+
+      function drawStationSign() {
+        if (scroll > 250) return;
+        ctx.fillStyle = "#fff8e9";
+        roundedRect(48, 194, 180, 51, 9);
+        ctx.fill();
+        ctx.fillStyle = "#d94b7a";
+        ctx.font = "bold 22px sans-serif";
+        ctx.fillText("新宿駅", 67, 227);
+        ctx.fillStyle = "#6b5368";
+        ctx.font = "bold 12px sans-serif";
+        ctx.fillText("SHINJUKU", 150, 225);
+      }
+
+      function drawBuildings() {
+        for (let i = 0; i < 7; i++) {
+          const x = ((i * 205 - scroll * .42 + 50) % (width + 220) + width + 220) % (width + 220) - 110;
+          const h = 130 + (i % 3) * 35;
+          ctx.fillStyle = ["#615578", "#75617a", "#5a526d"][i % 3];
+          ctx.fillRect(x, 306 - h, 145, h);
+          ctx.fillStyle = "#f0bf94";
+          for (let w = 0; w < 4; w++) {
+            for (let row = 0; row < 3; row++) {
+              ctx.globalAlpha = .45 + ((i + w + row) % 2) * .28;
+              ctx.fillRect(x + 12 + w * 31, 192 + row * 32 - (h < 150 ? 0 : 20), 15, 17);
+            }
+          }
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = "#f37798";
+          ctx.fillRect(x + 6, 279, 133, 18);
+          ctx.fillStyle = "#fff6e8";
+          ctx.font = "bold 11px sans-serif";
+          ctx.fillText(i % 2 ? "LIVE MUSIC" : "CAFE & BAR", x + 13, 292);
+        }
+        if (distance > courseLength - 500) {
+          const goalX = 190 + (courseLength - distance);
+          ctx.fillStyle = "#342c4c";
+          ctx.fillRect(goalX, 215, 160, 92);
+          ctx.fillStyle = "#ff75a9";
+          ctx.fillRect(goalX + 8, 225, 144, 45);
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 24px sans-serif";
+          ctx.fillText("WALLY", goalX + 38, 256);
+          ctx.font = "bold 12px sans-serif";
+          ctx.fillText("LIVE HOUSE", goalX + 45, 291);
+        }
+      }
+
+      function drawHud() {
+        ctx.fillStyle = "rgba(24,22,47,.78)";
+        roundedRect(22, 18, 268, 74, 16);
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 20px sans-serif";
+        ctx.fillText(`残り ${Math.max(0, 60 - elapsed).toFixed(1)} 秒`, 40, 49);
+        ctx.font = "bold 15px sans-serif";
+        ctx.fillStyle = "#ffd98e";
+        ctx.fillText(`出演パス  ${player.score}`, 40, 75);
+        ctx.fillStyle = "#fff";
+        ctx.font = "24px sans-serif";
+        ctx.fillText("♥".repeat(player.lives) + "♡".repeat(3 - player.lives), 214, 57);
+
+        const barX = 330, barY = 31, barW = 590;
+        ctx.fillStyle = "rgba(24,22,47,.72)";
+        roundedRect(barX, barY, barW, 29, 14);
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 12px sans-serif";
+        ctx.fillText("SHINJUKU", barX + 3, 78);
+        ctx.textAlign = "right";
+        ctx.fillText("WALLY", barX + barW, 78);
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#ff8db8";
+        roundedRect(barX + 5, barY + 5, (barW - 10) * Math.min(1, distance / courseLength), 19, 10);
+        ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(barX + 5 + (barW - 10) * Math.min(1, distance / courseLength), barY + 14, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawPlayer() {
+        const isRunning = state === "playing" && Math.floor(elapsed * 7) % 2 === 1;
+        const image = isRunning ? images.run : images.idle;
+        const spriteWidth = isRunning ? characterRunWidth : characterHitboxWidth;
+        const spriteX = player.x + (characterSlotWidth - spriteWidth) / 2;
+        const y = player.y - characterHeight;
+        ctx.fillStyle = "rgba(28,22,40,.3)";
+        ctx.beginPath();
+        ctx.ellipse(player.x + characterSlotWidth / 2, ground + 2, 30, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        if (player.invincible > 0 && Math.floor(player.invincible * 10) % 2 === 0) return;
+        if (image.complete && image.naturalWidth) {
+          ctx.drawImage(image, spriteX, y, spriteWidth, characterHeight);
+        } else {
+          ctx.fillStyle = "#ff79aa";
+          roundedRect(spriteX, y, spriteWidth, characterHeight, 12);
+          ctx.fill();
+        }
+      }
+
+      function drawObstacles() {
+        for (const obstacle of obstacles) {
+          const x = obstacle.x - scroll;
+          if (obstacle.type === "cone") {
+            ctx.fillStyle = "#ff8b67";
+            ctx.beginPath();
+            ctx.moveTo(x + obstacle.width / 2, ground - obstacle.height);
+            ctx.lineTo(x + obstacle.width, ground);
+            ctx.lineTo(x, ground);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = "#fff0d6";
+            ctx.fillRect(x + 7, ground - 16, obstacle.width - 14, 5);
+          } else if (obstacle.type === "step") {
+            ctx.fillStyle = "#c17b62";
+            ctx.fillRect(x, ground - obstacle.height, obstacle.width, obstacle.height);
+            ctx.fillStyle = "#f7c88c";
+            ctx.fillRect(x, ground - obstacle.height, obstacle.width, 5);
+            ctx.fillStyle = "#976158";
+            ctx.fillRect(x + 8, ground - 11, obstacle.width - 8, 5);
+          } else {
+            const stepWidth = obstacle.width / 4;
+            ctx.fillStyle = "#8d7397";
+            for (let i = 0; i < 4; i++) {
+              const stepHeight = obstacle.height * (i + 1) / 4;
+              ctx.fillRect(x + stepWidth * i, ground - stepHeight, stepWidth + 1, stepHeight);
+              ctx.fillStyle = "#e9c39c";
+              ctx.fillRect(x + stepWidth * i, ground - stepHeight, stepWidth + 1, 4);
+              ctx.fillStyle = "#8d7397";
+            }
+          }
+        }
+        for (const pickup of pickups) {
+          const x = pickup.x - scroll;
+          const bob = Math.sin(elapsed * 6 + pickup.x) * 5;
+          ctx.fillStyle = "#ffe58d";
+          ctx.beginPath();
+          ctx.arc(x, pickup.y + bob, 15, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#a85d81";
+          ctx.font = "bold 14px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("P", x, pickup.y + bob + 5);
+          ctx.textAlign = "left";
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+        drawBackground();
+        drawObstacles();
+        drawPlayer();
+        drawHud();
+        if (flash > 0) {
+          ctx.fillStyle = `rgba(255, 87, 130, ${flash * .18})`;
+          ctx.fillRect(0, 0, width, height);
+        }
+      }
+
+      function resetGame() {
+        elapsed = 0;
+        distance = 0;
+        scroll = 0;
+        obstacleTimer = .9;
+        pickupTimer = 2;
+        obstacles.length = 0;
+        pickups.length = 0;
+        player.y = ground;
+        player.vy = 0;
+        player.grounded = true;
+        player.wallSupport = null;
+        player.lives = 3;
+        player.score = 0;
+        player.invincible = 0;
+        flash = 0;
+        keys.clear();
+      }
+
+      function startGame() {
+        resetGame();
+        state = "playing";
+        overlay.hidden = true;
+        lastTime = performance.now();
+        if (soundEnabled) startMusic();
+        requestAnimationFrame(loop);
+      }
+
+      function endGame(won) {
+        state = won ? "won" : "lost";
+        stopMusic();
+        overlayTitle.textContent = won ? "WALLYに到着！" : "間に合わなかった…";
+        overlayText.innerHTML = won
+          ? `出演パスを ${player.score} 枚集めて、無事ライブハウスに到着！<br>最高のステージにしよう！`
+          : `出演時間に間に合いませんでした。出演パス ${player.score} 枚！<br>もう一度チャレンジしてみよう。`;
+        startButton.textContent = "もう一度走る";
+        overlay.hidden = false;
+      }
+
+      function spawnObstacle() {
+        const roll = Math.random();
+        const type = roll < .4 ? "cone" : roll < .72 ? "step" : "stairs";
+        const dimensions = {
+          cone: { width: 39, height: 38 },
+          step: { width: 66, height: 28 },
+          stairs: { width: 88, height: 52 }
+        }[type];
+        obstacles.push({ x: scroll + width + 30, type, ...dimensions, passed: false });
+      }
+
+      function getWallTop(obstacle, screenX) {
+        let height = obstacle.height;
+        if (obstacle.type === "stairs") {
+          const stepWidth = obstacle.width / 4;
+          const stepIndex = Math.max(0, Math.min(3, Math.floor((screenX - (obstacle.x - scroll)) / stepWidth)));
+          height *= (stepIndex + 1) / 4;
+        }
+        return ground - height;
+      }
+
+      function update(delta) {
+        elapsed += delta;
+        flash = Math.max(0, flash - delta);
+        player.invincible = Math.max(0, player.invincible - delta);
+        const previousPlayerX = player.x;
+        const previousPlayerY = player.y;
+        const horizontal = (keys.has("ArrowRight") || keys.has("d") ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("a") ? 1 : 0);
+        player.x = Math.max(0, Math.min(width - characterSlotWidth, player.x + horizontal * 240 * delta));
+
+        if (player.wallSupport) {
+          const supportX = player.wallSupport.x - scroll;
+          const hitboxX = player.x + (characterSlotWidth - characterHitboxWidth) / 2;
+          const hitboxCenter = hitboxX + characterHitboxWidth / 2;
+          const supportTop = getWallTop(player.wallSupport, hitboxCenter);
+          const stillOverlapping = hitboxX < supportX + player.wallSupport.width && hitboxX + characterHitboxWidth > supportX;
+          if (stillOverlapping && Math.abs(player.y - supportTop) <= 1) {
+            player.y = supportTop;
+            player.vy = 0;
+            player.grounded = true;
+          } else {
+            player.wallSupport = null;
+            player.grounded = false;
+          }
+        }
+
+        const jumpPressed = keys.has("ArrowUp") || keys.has(" ") || keys.has("w");
+        if (jumpPressed && player.grounded) {
+          player.vy = -640;
+          player.grounded = false;
+          player.wallSupport = null;
+          keys.delete("ArrowUp");
+          keys.delete(" ");
+          keys.delete("w");
+        }
+        if (!player.grounded) {
+          player.vy += 1550 * delta;
+          player.y = Math.min(ground, player.y + player.vy * delta);
+          if (player.y >= ground) {
+            player.y = ground;
+            player.vy = 0;
+            player.grounded = true;
+            player.wallSupport = null;
+          }
+        }
+
+        const previousDistance = distance;
+        distance = Math.min(courseLength, distance + 172 * delta);
+        scroll = distance * .78;
+        obstacleTimer -= delta;
+        pickupTimer -= delta;
+        if (obstacleTimer <= 0) {
+          spawnObstacle();
+          obstacleTimer = 1.8 + Math.random() * 1.1;
+        }
+        if (pickupTimer <= 0) {
+          pickups.push({ x: scroll + width + 30, y: 318 + Math.random() * 45 });
+          pickupTimer = 2.4 + Math.random() * 1.4;
+        }
+
+        let blockedByWall = false;
+        for (const obstacle of obstacles) {
+          const x = obstacle.x - scroll;
+          const hitboxX = player.x + (characterSlotWidth - characterHitboxWidth) / 2;
+          const hitboxRight = hitboxX + characterHitboxWidth;
+          const overlapStart = Math.max(x, hitboxX);
+          const overlapEnd = Math.min(x + obstacle.width, hitboxRight);
+          const overlapX = overlapStart < overlapEnd;
+          if (overlapX && obstacle.type !== "cone") {
+            const surfaceX = Math.max(overlapStart, Math.min(overlapEnd, hitboxX + characterHitboxWidth / 2));
+            const wallTop = getWallTop(obstacle, surfaceX);
+            if (player.wallSupport === obstacle && player.vy === 0) {
+              player.y = wallTop;
+              player.grounded = true;
+              continue;
+            }
+            const landedOnWall = player.vy >= 0 && previousPlayerY <= wallTop && player.y >= wallTop;
+            if (landedOnWall) {
+              player.y = wallTop;
+              player.vy = 0;
+              player.grounded = true;
+              player.wallSupport = obstacle;
+            } else if (player.y > wallTop) {
+              blockedByWall = true;
+              if (player.x > previousPlayerX && previousPlayerX + (characterSlotWidth - characterHitboxWidth) / 2 + characterHitboxWidth <= x) {
+                player.x = Math.max(0, x - (characterSlotWidth - characterHitboxWidth) / 2 - characterHitboxWidth);
+              }
+            }
+          } else if (overlapX && obstacle.type === "cone" && player.y >= ground - 36 && player.invincible <= 0 && !obstacle.passed) {
+            player.lives--;
+            player.invincible = 1.5;
+            obstacle.passed = true;
+            flash = .7;
+            if (player.lives <= 0) {
+              endGame(false);
+              return;
+            }
+          }
+        }
+        if (blockedByWall) {
+          distance = previousDistance;
+          scroll = distance * .78;
+          if (player.wallSupport) {
+            const supportX = player.wallSupport.x - scroll;
+            const hitboxX = player.x + (characterSlotWidth - characterHitboxWidth) / 2;
+            player.y = getWallTop(player.wallSupport, hitboxX + characterHitboxWidth / 2);
+          }
+        }
+        for (let i = pickups.length - 1; i >= 0; i--) {
+          const pickup = pickups[i];
+          const x = pickup.x - scroll;
+          const playerCenter = player.x + characterSlotWidth / 2;
+          if (x > playerCenter - 43 && x < playerCenter + 43 && Math.abs(pickup.y - (player.y - 65)) < 78) {
+            player.score++;
+            pickups.splice(i, 1);
+          } else if (x < -40) {
+            pickups.splice(i, 1);
+          }
+        }
+        while (obstacles.length && obstacles[0].x - scroll < -100) obstacles.shift();
+        if (distance >= courseLength) {
+          endGame(true);
+          return;
+        }
+        if (elapsed >= 60) endGame(false);
+      }
+
+      function loop(now) {
+        if (state !== "playing") return;
+        const delta = Math.min((now - lastTime) / 1000, .04);
+        lastTime = now;
+        update(delta);
+        draw();
+        if (state === "playing") requestAnimationFrame(loop);
+      }
+
+      function startMusic() {
+        if (!soundEnabled) return;
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioContext.resume();
+        if (melodyTimer) return;
+        const notes = [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880, 698.46, 523.25, 659.25, 783.99, 1046.5];
+        melodyTimer = window.setInterval(() => {
+          if (!audioContext || audioContext.state !== "running") return;
+          const now = audioContext.currentTime;
+          const note = notes[melodyIndex % notes.length];
+          melodyIndex++;
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.type = "triangle";
+          oscillator.frequency.value = note;
+          gain.gain.setValueAtTime(.0001, now);
+          gain.gain.exponentialRampToValueAtTime(.045, now + .025);
+          gain.gain.exponentialRampToValueAtTime(.0001, now + .28);
+          oscillator.connect(gain);
+          gain.connect(audioContext.destination);
+          oscillator.start(now);
+          oscillator.stop(now + .3);
+        }, 330);
+      }
+
+      function stopMusic() {
+        if (melodyTimer) {
+          window.clearInterval(melodyTimer);
+          melodyTimer = undefined;
+        }
+      }
+
+      function setSound(enabled) {
+        soundEnabled = enabled;
+        soundButton.textContent = soundEnabled ? "♪ BGM ON" : "♪ BGM OFF";
+        soundButton.setAttribute("aria-pressed", String(soundEnabled));
+        if (soundEnabled && state === "playing") startMusic();
+        else stopMusic();
+      }
+
+      window.addEventListener("keydown", event => {
+        if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(event.key)) event.preventDefault();
+        if (event.repeat && ["ArrowUp", " ", "w"].includes(event.key)) return;
+        keys.add(event.key);
+      });
+      window.addEventListener("keyup", event => keys.delete(event.key));
+      window.addEventListener("blur", () => keys.clear());
+      startButton.addEventListener("click", startGame);
+      soundButton.addEventListener("click", () => setSound(!soundEnabled));
+      document.querySelectorAll(".touch-controls button").forEach(button => {
+        const key = button.dataset.key;
+        button.addEventListener("pointerdown", event => {
+          event.preventDefault();
+          keys.add(key);
+          button.setPointerCapture(event.pointerId);
+        });
+        const release = () => keys.delete(key);
+        button.addEventListener("pointerup", release);
+        button.addEventListener("pointercancel", release);
+        button.addEventListener("lostpointercapture", release);
+      });
+
+      draw();
+    })();
+  </script>
+</body>
+</html>
