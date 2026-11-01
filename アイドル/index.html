@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#160f27">
+  <title>アイドル・インフレ — 1曲で億稼ぐまで</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #160f27;
+      --panel: #241a38;
+      --panel-2: #302344;
+      --line: #49365e;
+      --pink: #ff6fae;
+      --pink-soft: #ffb0d1;
+      --cyan: #76e9ed;
+      --yellow: #ffd970;
+      --text: #fff7fb;
+      --muted: #b7a9c5;
+      --green: #9be8ba;
+      font-family: "Trebuchet MS", "Yu Gothic", Meiryo, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 50% -10%, #573764 0, transparent 45%),
+        radial-gradient(ellipse at 90% 80%, #25204a 0, transparent 40%),
+        var(--bg);
+    }
+
+    body:before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0;
+      background-position: center;
+      background-size: cover;
+      transition: opacity .35s ease;
+    }
+    body[data-screen="shopScreen"]:before {
+      opacity: 1;
+      background-image: linear-gradient(110deg, #160f27e8 0%, #160f27c9 52%, #160f2766 100%), url("./assets/backgrounds/office-meeting.jpg");
+    }
+    body[data-screen="liveScreen"]:before {
+      opacity: 1;
+      background-image: linear-gradient(110deg, #160f27d9 0%, #160f27ae 58%, #160f2770 100%), var(--venue-background);
+    }
+
+    button { font: inherit; }
+    button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+    .shell { position: relative; z-index: 1; width: min(1050px, 100%); margin: 0 auto; padding: 22px 22px 48px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand-mark { display: grid; place-items: center; width: 43px; height: 43px; border: 2px solid var(--pink); border-radius: 12px; color: var(--pink); font-size: 23px; transform: rotate(-4deg); box-shadow: 0 0 22px #ff6fae33; }
+    .brand-name { font-weight: 900; letter-spacing: .04em; font-size: 18px; }
+    .brand-sub { color: var(--muted); font-size: 11px; margin-top: 2px; letter-spacing: .08em; }
+    .hud { display: flex; gap: 9px; align-items: center; }
+    .hud-chip { padding: 9px 13px; border: 1px solid var(--line); border-radius: 12px; background: #21182ee8; color: var(--muted); font-size: 13px; white-space: nowrap; }
+    .hud-chip strong { color: var(--yellow); margin-left: 5px; font-size: 15px; }
+    .hud-chip.fans strong { color: var(--cyan); }
+    .screen { display: none; }
+    .screen.active { display: block; animation: enter .28s ease-out; }
+    @keyframes enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    .panel { border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(145deg, #2b203e, #20182f); box-shadow: 0 16px 48px #08061155; }
+    .eyebrow { color: var(--pink-soft); font-size: 12px; font-weight: 800; letter-spacing: .14em; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 11px; font-size: clamp(32px, 6vw, 58px); line-height: 1.07; letter-spacing: -.04em; }
+    h2 { margin-bottom: 8px; font-size: clamp(23px, 4vw, 32px); }
+    h3 { margin-bottom: 7px; }
+    .muted { color: var(--muted); }
+    .title-card { position: relative; overflow: hidden; min-height: 390px; padding: clamp(26px, 6vw, 60px); display: grid; grid-template-columns: 1.15fr .85fr; align-items: center; gap: 24px; }
+    .title-card:after { content: "★"; position: absolute; right: 7%; top: -50px; color: #ff6fae14; font-size: 360px; pointer-events: none; }
+    .title-copy { position: relative; z-index: 1; }
+    .title-copy h1 span { color: var(--pink); text-shadow: 0 0 28px #ff6fae55; }
+    .title-copy p { max-width: 470px; color: #d3c7db; line-height: 1.8; }
+    .idol-stage { position: relative; z-index: 1; display: grid; place-items: center; min-height: 250px; }
+    .idol-pixel { position: relative; font-size: clamp(110px, 18vw, 180px); line-height: 1; filter: drop-shadow(0 0 28px #ff6fae44); }
+    .speech { position: absolute; top: 16px; right: 0; max-width: 170px; padding: 12px 14px; border-radius: 14px 14px 14px 3px; color: #392344; background: var(--pink-soft); font-weight: 800; font-size: 13px; transform: rotate(4deg); }
+    .button { border: 0; border-radius: 11px; padding: 13px 20px; color: #26152c; background: linear-gradient(135deg, #ff9ac4, #ff65a8); font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #b63a72, 0 10px 24px #ff6fae24; transition: transform .12s, filter .12s; }
+    .button:hover { filter: brightness(1.08); transform: translateY(-2px); }
+    .button:active { transform: translateY(2px); box-shadow: 0 2px 0 #b63a72; }
+    .button.secondary { color: var(--text); background: #49365e; box-shadow: 0 4px 0 #352443; }
+    .button.cyan { background: linear-gradient(135deg, #a4f5ee, #62dce2); box-shadow: 0 5px 0 #2d929d; }
+    .button:disabled { filter: grayscale(.8); opacity: .48; cursor: not-allowed; transform: none; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .howto { margin-top: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .howto > div { padding: 15px; border-radius: 13px; border: 1px solid #49365e88; background: #21182d99; }
+    .howto b { display: block; margin-bottom: 6px; color: var(--cyan); }
+    .howto span { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 18px; }
+    .venue { color: var(--yellow); font-weight: 900; white-space: nowrap; }
+    .shop-layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; align-items: start; }
+    .shop-main { padding: 22px; }
+    .offer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+    .offer { display: flex; flex-direction: column; min-height: 193px; padding: 15px; border: 1px solid var(--line); border-radius: 14px; background: #20172f; }
+    .offer .item-icon { font-size: 27px; margin-bottom: 9px; }
+    .offer h3 { font-size: 15px; }
+    .offer p { flex: 1; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .price { color: var(--yellow); font-weight: 900; font-size: 13px; margin-bottom: 10px; }
+    .offer .button { padding: 9px 11px; font-size: 12px; }
+    .side-panel { padding: 18px; }
+    .side-panel + .side-panel { margin-top: 13px; }
+    .side-panel h3 { font-size: 14px; color: var(--pink-soft); }
+    .deck-summary { display: flex; flex-direction: column; gap: 7px; max-height: 230px; overflow: auto; }
+    .deck-row { display: flex; justify-content: space-between; gap: 8px; color: #ded4e5; font-size: 12px; }
+    .deck-row small { color: var(--muted); }
+    .inventory { display: flex; flex-wrap: wrap; gap: 7px; }
+    .inventory span { padding: 6px 8px; border: 1px solid #66425d; border-radius: 8px; color: var(--pink-soft); background: #42243e; font-size: 11px; }
+    .live-top { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; margin-bottom: 15px; }
+    .target-card { padding: 15px 19px; text-align: right; }
+    .target-card small { display: block; color: var(--muted); }
+    .target-card strong { display: block; color: var(--yellow); font-size: 25px; }
+    .progress-wrap { margin-top: 12px; }
+    .progress-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+    .progress { height: 9px; overflow: hidden; border-radius: 20px; background: #130e1e; }
+    .progress > i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--pink), var(--yellow)); transition: width .45s; }
+    .live-board { display: grid; grid-template-columns: 1fr 280px; gap: 15px; }
+    .stage-area { min-height: 250px; display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 22px; overflow: hidden; background: radial-gradient(ellipse at 50% 78%, #ff6fae1a, transparent 52%), linear-gradient(180deg, #20182e, #25182e); }
+    .crowd { font-size: 38px; letter-spacing: -7px; margin-bottom: 5px; animation: bob 1.8s ease-in-out infinite alternate; }
+    @keyframes bob { to { transform: translateY(-5px); } }
+    .stage-idol { font-size: 65px; filter: drop-shadow(0 0 18px #ff6fae66); }
+    .live-quote { margin: 7px 0 0; color: var(--pink-soft); font-size: 13px; text-align: center; }
+    .live-side { display: flex; flex-direction: column; gap: 12px; }
+    .live-stat { padding: 16px; }
+    .live-stat .stat-line { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin: 8px 0; }
+    .live-stat strong { color: var(--cyan); }
+    .log { padding: 15px; min-height: 94px; max-height: 150px; overflow: auto; color: #d6ccde; font-size: 12px; line-height: 1.6; }
+    .log div + div { margin-top: 5px; }
+    .log .latest { color: var(--yellow); }
+    .hand-heading { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 10px; gap: 12px; }
+    .hand-heading h3 { margin: 0; }
+    .hand { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .card { position: relative; min-height: 164px; padding: 13px 12px 11px; text-align: left; color: var(--text); border: 1px solid #5b456c; border-radius: 13px; background: linear-gradient(150deg, #392846, #251b36); cursor: pointer; transition: transform .14s, border-color .14s, box-shadow .14s; }
+    .card:hover { transform: translateY(-4px); border-color: var(--pink); }
+    .card.selected { transform: translateY(-7px); border-color: var(--yellow); box-shadow: 0 0 0 2px #ffd97055, 0 12px 25px #07040d66; }
+    .card.type-fan { background: linear-gradient(150deg, #3e2943, #251b36); }
+    .card.type-otage { background: linear-gradient(150deg, #263b4c, #241a37); }
+    .card-icon { display: block; font-size: 26px; margin-bottom: 8px; }
+    .card-name { display: block; font-weight: 900; font-size: 13px; margin-bottom: 5px; }
+    .card-kind { display: inline-block; padding: 3px 6px; border-radius: 6px; color: var(--pink-soft); background: #67365355; font-size: 10px; margin-bottom: 7px; }
+    .card-stats { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; }
+    .card-stats b { color: var(--yellow); }
+    .card-note { display: block; min-height: 14px; margin-top: 6px; color: var(--pink-soft); font-size: 10px; }
+    .live-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 14px; }
+    .result-card { max-width: 720px; margin: 45px auto 0; padding: clamp(25px, 6vw, 48px); text-align: center; }
+    .result-icon { font-size: 65px; line-height: 1.2; margin-bottom: 14px; }
+    .result-score { color: var(--yellow); font-size: clamp(34px, 7vw, 54px); font-weight: 1000; margin: 16px 0 8px; }
+    .reward-choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 13px; max-width: 650px; margin: 22px auto; text-align: left; }
+    .reward-choice { min-height: 155px; padding: 19px; border: 1px solid var(--line); border-radius: 15px; background: #20172f; cursor: pointer; color: var(--text); }
+    .reward-choice:hover { border-color: var(--yellow); transform: translateY(-2px); }
+    .reward-choice .item-icon { font-size: 28px; }
+    .reward-choice h3 { margin: 8px 0 5px; }
+    .reward-choice p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .toast { position: fixed; left: 50%; bottom: 24px; z-index: 5; transform: translate(-50%, 20px); opacity: 0; padding: 11px 17px; border: 1px solid #70505f; border-radius: 10px; background: #21182f; box-shadow: 0 8px 25px #0007; pointer-events: none; transition: .2s; }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+    .footer-note { margin-top: 22px; text-align: center; color: #82738f; font-size: 11px; }
+
+    @media (max-width: 760px) {
+      .shell { padding: 14px 13px 35px; }
+      .topbar { align-items: flex-start; }
+      .brand-name { font-size: 15px; }
+      .brand-sub { font-size: 9px; }
+      .brand-mark { width: 37px; height: 37px; font-size: 20px; }
+      .hud { flex-direction: column; align-items: end; gap: 5px; }
+      .hud-chip { padding: 6px 9px; font-size: 11px; }
+      .hud-chip strong { font-size: 13px; }
+      .title-card { grid-template-columns: 1fr; text-align: center; min-height: unset; padding: 29px 20px; gap: 2px; }
+      .title-copy p { margin-left: auto; margin-right: auto; }
+      .idol-stage { min-height: 175px; }
+      .idol-pixel { font-size: 125px; }
+      .speech { right: 7%; top: 2px; }
+      .howto { grid-template-columns: 1fr; }
+      .shop-layout, .live-board { grid-template-columns: 1fr; }
+      .offer-grid { grid-template-columns: 1fr; }
+      .offer { min-height: 150px; }
+      .side-panel + .side-panel { margin-top: 0; }
+      .shop-sidebar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .live-top { grid-template-columns: 1fr; }
+      .target-card { text-align: left; display: flex; justify-content: space-between; align-items: center; }
+      .target-card strong { font-size: 20px; }
+      .stage-area { min-height: 180px; }
+      .live-side { display: grid; grid-template-columns: 1fr 1fr; }
+      .log { grid-column: 1 / -1; }
+      .hand { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .card { min-height: 145px; }
+      .card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+      .hand-heading { align-items: start; flex-direction: column; }
+      .live-actions { align-items: stretch; flex-direction: column; }
+      .live-actions .button { width: 100%; }
+      .reward-choices { grid-template-columns: 1fr; }
+      .section-head { align-items: start; flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *:before, *:after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">★</div>
+        <div><div class="brand-name">アイドル・インフレ</div><div class="brand-sub">1曲で億稼ぐまで</div></div>
+      </div>
+      <div class="hud" id="hud" hidden>
+        <div class="hud-chip">所持金<strong id="moneyHud">0円</strong></div>
+        <div class="hud-chip fans">累計ファン<strong id="fansHud">0人</strong></div>
+      </div>
+    </header>
+
+    <section class="screen active" id="titleScreen">
+      <div class="panel title-card">
+        <div class="title-copy">
+          <div class="eyebrow">ONE GIRL. ONE DREAM. ONE HUGE BUZZ.</div>
+          <h1>小さなライブから、<br><span>ドームの頂点へ。</span></h1>
+          <p>メンバー1人、持ち曲もわずか。半年後の解散を回避するため、セットリストを組んでファンを熱狂させよう。カードとファンサを重ねて、スコアをインフレさせるデッキ構築ライブゲーム！</p>
+          <div class="button-row"><button class="button" id="startButton" disabled>カタログ読み込み中…</button></div>
+          <p id="catalogStatus" class="muted" aria-live="polite" style="margin:12px 0 0;font-size:12px"></p>
+        </div>
+        <div class="idol-stage" aria-label="ステージに立つアイドル">
+          <div class="speech">「今日こそ満員に<br>してみせるっ！」</div>
+          <div class="idol-pixel" aria-hidden="true">🎤</div>
+        </div>
+      </div>
+      <div class="howto">
+        <div><b>01　セットリスト</b><span>手札に表示された異なる楽曲カード2種類から1枚を選び、ほかのカードと合わせて最大3枚でパフォーマンス。同じ楽曲を再演するとアピールが半減します。</span></div>
+        <div><b>02　バズを育てる</b><span>使ったカードはアピールがランダムに成長。ライブをクリアするたび成長の下限・上限が上がります。ライブ後はカードや推し活グッズも獲得できます。</span></div>
+        <div><b>03　全国ツアーへ</b><span>5つの会場を連続攻略。目標ファン数を超えられなければ、その時点でツアー終了！</span></div>
+      </div>
+    </section>
+
+    <section class="screen" id="shopScreen">
+      <div class="section-head">
+        <div><div class="eyebrow" id="shopEyebrow">LIVE PREPARATION</div><h2 id="shopTitle">ライブ準備</h2><div class="muted" id="shopDesc"></div></div>
+        <div class="venue" id="shopVenue"></div>
+      </div>
+      <div class="shop-layout">
+        <div class="panel shop-main">
+          <h3>今日のショップ <span class="muted" style="font-size:12px;font-weight:400">— 気になるものを購入しよう</span></h3>
+          <div class="offer-grid" id="offers"></div>
+          <div class="button-row"><button class="button cyan" id="goLiveButton">ライブ会場へ！　▶</button><span class="muted" style="font-size:12px">買い物をしなくてもライブに進めます</span></div>
+        </div>
+        <aside class="shop-sidebar">
+          <div class="panel side-panel"><h3>📀 セットリスト</h3><div class="deck-summary" id="deckSummary"></div></div>
+          <div class="panel side-panel"><h3>✨ 推し活グッズ</h3><div class="inventory" id="inventory"></div></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="screen" id="liveScreen">
+      <div class="live-top">
+        <div>
+          <div class="eyebrow" id="liveEyebrow">LIVE SHOW</div>
+          <h2 id="liveVenue" style="margin-bottom:0">地下ライブハウス</h2>
+          <div class="progress-wrap">
+            <div class="progress-label"><span>今回の獲得ファン</span><span id="scoreLabel">0 / 0</span></div>
+            <div class="progress"><i id="scoreProgress"></i></div>
+          </div>
+        </div>
+        <div class="panel target-card"><small>目標ファン数</small><strong id="targetLabel">0人</strong></div>
+      </div>
+      <div class="live-board">
+        <div class="panel stage-area">
+          <div class="crowd" id="crowd" aria-label="観客">☺　☺　☺</div>
+          <div class="stage-idol" aria-hidden="true">🎤</div>
+          <p class="live-quote" id="liveQuote">ライブスタート！</p>
+        </div>
+        <aside class="live-side">
+          <div class="panel live-stat">
+            <h3 style="margin-bottom:10px">LIVE DATA</h3>
+            <div class="stat-line"><span>パフォーマンス</span><strong id="turnLabel">1 / 3</strong></div>
+            <div class="stat-line"><span>コンボ</span><strong id="comboLabel">0 COMBO</strong></div>
+            <div class="stat-line"><span>選択中</span><strong id="selectedLabel">0 / 3 枚</strong></div>
+          </div>
+          <div class="panel log" id="liveLog" aria-live="polite"></div>
+        </aside>
+      </div>
+      <div class="hand-heading"><h3>手札からカードを選ぼう</h3><span class="muted" style="font-size:12px">異なる楽曲2種類から1枚を含む最大3枚。選んだ順にパフォーマンスします</span></div>
+      <div class="hand" id="hand"></div>
+      <div class="live-actions">
+        <span class="muted" id="handHint" style="font-size:13px">カードをタップして選択（もう一度タップで解除）</span>
+        <button class="button" id="playButton">選んだカードでパフォーマンス！</button>
+      </div>
+    </section>
+
+    <section class="screen" id="resultScreen">
+      <div class="panel result-card">
+        <div class="result-icon" id="resultIcon">🎉</div>
+        <div class="eyebrow" id="resultEyebrow">LIVE CLEAR!</div>
+        <h2 id="resultTitle">ライブ大成功！</h2>
+        <p class="muted" id="resultMessage"></p>
+        <div class="result-score" id="resultScore">0人</div>
+        <div class="muted" id="resultExtra"></div>
+        <div class="button-row" style="justify-content:center;margin-top:24px"><button class="button" id="resultButton">次へ進む　▶</button></div>
+      </div>
+    </section>
+
+    <section class="screen" id="rewardScreen">
+      <div class="section-head" style="justify-content:center;text-align:center">
+        <div><div class="eyebrow">NEW CARD ACQUIRED</div><h2>次のライブに向けて、1枚選ぼう</h2><div class="muted">選んだカードはセットリストに加わります</div></div>
+      </div>
+      <div class="reward-choices" id="rewardChoices"></div>
+      <div style="text-align:center"><button class="button secondary" id="skipReward">カードを選ばず次へ</button></div>
+    </section>
+
+    <section class="screen" id="endScreen">
+      <div class="panel result-card">
+        <div class="result-icon" id="endIcon">🏟️</div>
+        <div class="eyebrow" id="endEyebrow">TOUR COMPLETE</div>
+        <h2 id="endTitle">ドームツアー、大成功！</h2>
+        <p class="muted" id="endMessage"></p>
+        <div class="result-score" id="endFans">0人</div>
+        <div class="button-row" style="justify-content:center;margin-top:24px"><button class="button" id="restartButton">もう一度プロデュースする</button></div>
+      </div>
+    </section>
+    <div class="footer-note">ノベルノアの物語は、あなたのセットリストから始まる。</div>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+  <audio id="liveBgm" preload="none" loop></audio>
+
+  <script type="text/plain" id="cardCatalogFallback">
+name: "バブるシップ", kind: "song", label: "楽曲", appeal: 65, buzz: 1.65, color: "pink", icon: "🎵", desc: "王道のデビュー曲。"
+name: "アチチさまっ☆", kind: "song", label: "楽曲", appeal: 58, buzz: 1.55, color: "yellow", icon: "✨", desc: "サビで会場を一つに。"
+name: "キュン速GP!!", kind: "song", label: "楽曲", appeal: 52, buzz: 1.00, color: "cyan", icon: "💃", desc: "汗と気合のパフォーマンス。"
+name: "煽り！", kind: "otage", label: "ファンサ", appeal: 24, buzz: 1.35, color: "blue", icon: "🪄", desc: "客席の熱量を引き出す！"
+name: "ハートレス", kind: "fan", label: "ファンサ", appeal: 32, buzz: 1.2, color: "pink", icon: "🫶", desc: "目が合った瞬間、恋に落ちる。"
+name: "投げキッス", kind: "fan", label: "ファンサ", appeal: 22, buzz: 1.75, color: "red", icon: "😘", desc: "尊さで会場を揺らす。"
+name: "神対応お見送り", kind: "fan", label: "ファンサ", appeal: 45, buzz: 1.05, color: "yellow", icon: "👋", desc: "最後の一人まで笑顔で！"
+name: "なっちゃった♡", kind: "song", label: "楽曲", appeal: 35, buzz: 1.25, color: "red", icon: "📱", desc: "切り抜き動画が急上昇中。"
+name: "コール＆レスポンス", kind: "otage", label: "ファンサ", appeal: 35, buzz: 1.6, color: "cyan", icon: "📣", desc: "みんなで叫べば怖くない。"
+name: "撮可", kind: "fan", label: "ファンサ", appeal: 52, buzz: 1.45, color: "pink", icon: "📸", desc: "推しとの思い出を持ち帰ろう。"
+name: "ウォータープルーフ", kind: "song", label: "楽曲", appeal: 44, buzz: 1.15, color: "pink", icon: "🎼", desc: "恋を歌う曲。"
+name: "Rechoose", kind: "song", label: "楽曲", appeal: 34, buzz: 1.3, color: "blue", icon: "🌙", desc: "夜公演で映える幻想的なナンバー。"
+name: "ブラックラブ", kind: "song", label: "楽曲", appeal: 28, buzz: 1.1, color: "red", icon: "💓", desc: "サビの振り付けがSNSで話題に。"
+name: "次のページへ駆け出して", kind: "song", label: "楽曲", appeal: 42, buzz: 1.45, color: "cyan", icon: "🎸", desc: "何度でも聴きたくなる青春ロック。"
+name: "最前レス", kind: "fan", label: "ファンサ", appeal: 39, buzz: 1.35, color: "pink", icon: "💖", desc: "最前列のファンへとびきりの笑顔。"
+name: "ハートのファンサうちわ", kind: "fan", label: "ファンサ", appeal: 47, buzz: 1.2, color: "red", icon: "🪭", desc: "うちわのリクエストに全力で応える。"
+name: "お名前呼び", kind: "fan", label: "ファンサ", appeal: 30, buzz: 1.8, color: "yellow", icon: "🗣️", desc: "名前を呼ばれたファンが大歓声。"
+name: "MIXコール", kind: "otage", label: "ファンサ", appeal: 42, buzz: 1.4, color: "blue", icon: "🎤", desc: "息の合ったコールで会場をひとつに。"
+name: "サイリウムウェーブ", kind: "otage", label: "ファンサ", appeal: 48, buzz: 1.25, color: "cyan", icon: "🌊", desc: "光の波がフロアを駆け抜ける。"
+name: "アンコール大合唱", kind: "otage", label: "ファンサ", appeal: 36, buzz: 1.7, color: "yellow", icon: "🙌", desc: "もう一曲を願う声が響き渡る。"
+  </script>
+  <script type="text/plain" id="itemCatalogFallback">
+name チェキ会の列, icon 📸, price 18, desc ファンサカードのバズ度が +0.5。, effect cheki
+name メンカラ衣装, icon 👗, price 24, desc ピンクのカードのアピールが2倍！, effect color
+name グループオリジナルペンライト, icon 🔦, price 20, desc 全カードのアピールが1.35倍。, effect light
+name バズ動画編集, icon 📱, price 26, desc 各ライブ最初のパフォーマンスが2倍スコア！, effect viral
+name 神対応マニュアル, icon 💌, price 21, desc ファンサカードのアピールが1.6倍。, effect service
+name 爆音コール講座, icon 📣, price 22, desc オタ芸カードを出すたび今回のライブ中バズ度が +0.35。, effect otage
+name 作詞ノート, icon 📝, price 23, desc 楽曲カードのアピールが1.5倍。, effect songpower
+name 拡散希望ハッシュタグ, icon #️⃣, price 25, desc 全カードのバズ度が1.2倍。, effect hashtag
+name ボイトレ個人レッスン, icon 🎙️, price 20, desc 楽曲カードのバズ度が +0.4。, effect voice
+name ファンレター保管箱, icon 💌, price 19, desc ファンサカードのアピールが1.5倍。, effect letter
+name 公式マフラータオル, icon 🧣, price 18, desc オタ芸カードのアピールが1.5倍。, effect towel
+name アンコール札, icon 🎫, price 24, desc ライブ最終ターンのアピールが1.7倍。, effect encore
+name 豪華ステージ照明, icon 🔆, price 26, desc 各パフォーマンスの最初のカードのアピールが1.4倍。, effect stage
+name 初披露ボーナス, icon 🌟, price 22, desc そのライブで初めて披露する楽曲のアピールが1.5倍。, effect firstsong
+name 全国ツアー協賛, icon 🚌, price 25, desc ライブ成功時の報酬が10円増える。, effect tour
+  </script>
+  <script>
+    (() => {
+      "use strict";
+
+      const venues = [
+        { name: "地下ライブハウス", subtitle: "常連さんの心をつかめ！", target: 400, icon: "🎸", background: "underground-live.jpg" },
+        { name: "商店街フェス", subtitle: "通りすがりの人を巻き込もう！", target: 850, icon: "🏮", background: "shopping-street-festival.jpg" },
+        { name: "大型ライブホール", subtitle: "話題の新人として大注目！", target: 1000, icon: "🎆", background: "live-hall.jpg" },
+        { name: "アリーナ公演", subtitle: "全国のファンが集結！", target: 1200, icon: "🌟", background: "arena-live.jpg" },
+        { name: "国立競技場", subtitle: "夢の舞台を満員にしよう！", target: 1450, icon: "🏟️", background: "national-stadium.jpg" }
+      ];
+
+      const preparationBgm = "./bgm/準備/Yami_wo_Tsuranuite.mp3";
+      const liveBgmTracks = [
+        "./bgm/ぎゅっとてをつないで.mp3",
+        "./bgm/次のページへ駆け出して.mp3"
+      ];
+      const bgmObjectUrls = new Map();
+      let bgmRequest = 0;
+      let cardCatalog = [];
+      let itemCatalog = [];
+
+      const state = {
+        stage: 0, money: 32, fans: 0, deck: [], items: [], offers: [],
+        score: 0, turn: 0, combo: 0, liveOtageBonus: 0, songPlays: {},
+        firstPlay: true, hand: [], selected: [], log: [], lastReward: null
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const number = (value) => Math.floor(value).toLocaleString("ja-JP");
+      const screens = ["titleScreen", "shopScreen", "liveScreen", "resultScreen", "rewardScreen", "endScreen"];
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, (character) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        })[character]);
+      }
+
+      function parseCardCatalog(text) {
+        const cards = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line, index) => {
+          let card;
+          try {
+            const jsonLine = line.replace(/(^|,\s*)([a-zA-Z][\w]*)\s*:/g, '$1"$2":');
+            card = JSON.parse(`{${jsonLine}}`);
+          } catch (error) {
+            throw new Error(`cardCatalog.txt ${index + 1}行目を解析できません: ${error.message}`);
+          }
+          if (typeof card.name !== "string" || !card.name.trim()
+            || !["song", "fan", "otage"].includes(card.kind)
+            || typeof card.label !== "string" || typeof card.color !== "string"
+            || typeof card.icon !== "string" || typeof card.desc !== "string"
+            || !Number.isFinite(card.appeal) || card.appeal <= 0
+            || !Number.isFinite(card.buzz) || card.buzz <= 0) {
+            throw new Error(`cardCatalog.txt ${index + 1}行目の項目が不正です`);
+          }
+          return card;
+        });
+        if (!cards.some((card) => card.kind === "song") || !cards.some((card) => card.kind !== "song")) {
+          throw new Error("cardCatalog.txt には楽曲カードとそれ以外のカードが必要です");
+        }
+        return cards;
+      }
+
+      function parseItemCatalog(text) {
+        const items = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line, index) => {
+          const match = line.match(/^name\s+(.+?),\s*icon\s+(.+?),\s*price\s+(\d+),\s*desc\s+(.+?),\s*effect\s+([a-z][\w-]*)$/);
+          if (!match) throw new Error(`itemCatalog.txt ${index + 1}行目を解析できません`);
+          const [, name, icon, price, desc, effect] = match;
+          return { name, icon, price: Number(price), desc, effect };
+        });
+        if (items.length === 0) throw new Error("itemCatalog.txt にアイテムがありません");
+        return items;
+      }
+
+      async function loadCatalogs() {
+        try {
+          let cardsText;
+          let itemsText;
+          if (location.protocol === "file:") {
+            cardsText = $("cardCatalogFallback").textContent;
+            itemsText = $("itemCatalogFallback").textContent;
+          } else {
+            const [cardsResponse, itemsResponse] = await Promise.all([
+              fetch("./cardCatalog.txt", { cache: "no-store" }),
+              fetch("./itemCatalog.txt", { cache: "no-store" })
+            ]);
+            if (!cardsResponse.ok) throw new Error(`cardCatalog.txt の読み込みに失敗しました (${cardsResponse.status})`);
+            if (!itemsResponse.ok) throw new Error(`itemCatalog.txt の読み込みに失敗しました (${itemsResponse.status})`);
+            [cardsText, itemsText] = await Promise.all([cardsResponse.text(), itemsResponse.text()]);
+          }
+          cardCatalog = parseCardCatalog(cardsText);
+          itemCatalog = parseItemCatalog(itemsText);
+          const bgmFailures = await Promise.all([...liveBgmTracks, preparationBgm].map(async (source) => {
+            try {
+              await loadBgm(source);
+              return null;
+            } catch (error) {
+              console.error(`BGMを読み込めませんでした: ${source}`, error);
+              return source;
+            }
+          }));
+          const failedTracks = bgmFailures.filter(Boolean);
+          $("catalogStatus").textContent = `カード ${cardCatalog.length}種・推し活グッズ ${itemCatalog.length}種を読み込みました。${failedTracks.length ? ` BGMを読み込めませんでした: ${failedTracks.join("、")}` : " BGMも読み込みました。"}`;
+          $("startButton").disabled = false;
+          $("startButton").textContent = "プロデュースを始める　▶";
+        } catch (error) {
+          console.error("カタログを読み込めませんでした", error);
+          $("catalogStatus").textContent = `カタログの読み込みに失敗しました。${error.message}`;
+          $("startButton").textContent = "カタログを読み込めません";
+        }
+      }
+
+      function showScreen(id) {
+        screens.forEach((screen) => $(screen).classList.toggle("active", screen === id));
+        document.body.dataset.screen = id;
+        $("hud").hidden = id === "titleScreen";
+        bgmRequest += 1;
+        $("liveBgm").pause();
+        $("liveBgm").currentTime = 0;
+        updateHud();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      async function loadBgm(source) {
+        const response = await fetch(source, { cache: "no-store" });
+        if (!response.ok) throw new Error(`読み込みに失敗しました (${response.status})`);
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(new Blob([blob], { type: blob.type || "audio/mpeg" }));
+        bgmObjectUrls.set(source, objectUrl);
+      }
+
+      async function playBgm(source) {
+        const request = ++bgmRequest;
+        const audio = $("liveBgm");
+        try {
+          if (!bgmObjectUrls.has(source)) await loadBgm(source);
+          if (request !== bgmRequest) return;
+          audio.src = bgmObjectUrls.get(source);
+          audio.load();
+          await audio.play();
+        } catch (error) {
+          if (request !== bgmRequest) return;
+          console.error(`BGMを再生できませんでした: ${source}`, error);
+          toast("BGMを再生できませんでした。ファイルの場所と形式を確認してください。");
+        }
+      }
+
+      function updateHud() {
+        $("moneyHud").textContent = `${number(state.money)}円`;
+        $("fansHud").textContent = `${number(state.fans)}人`;
+      }
+
+      function makeCard(template) {
+        return { ...template, growth: template.growth || 0, id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}` };
+      }
+
+      function shuffle(values) {
+        const result = [...values];
+        for (let i = result.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [result[i], result[j]] = [result[j], result[i]];
+        }
+        return result;
+      }
+
+      function pickCards(count, exclude = []) {
+        const pool = cardCatalog.filter((card) => !exclude.includes(card.name));
+        return shuffle(pool).slice(0, count).map(makeCard);
+      }
+
+      function startGame() {
+        state.stage = 0;
+        state.money = 32;
+        state.fans = 0;
+        state.deck = cardCatalog.map(makeCard);
+        state.items = [];
+        openShop();
+      }
+
+      function openShop() {
+        const venue = venues[state.stage];
+        $("shopEyebrow").textContent = `TOUR ${String(state.stage + 1).padStart(2, "0")} / 05`;
+        $("shopTitle").textContent = "ライブ準備";
+        $("shopDesc").textContent = venue.subtitle;
+        $("shopVenue").textContent = `${venue.icon} ${venue.name}`;
+        state.offers = [
+          ...shuffle(itemCatalog).slice(0, 2).map((item) => ({ ...item, offerType: "item" })),
+          ...pickCards(1).map((card) => ({ ...card, price: 14, offerType: "card" }))
+        ];
+        renderShop();
+        showScreen("shopScreen");
+        playBgm(preparationBgm);
+      }
+
+      function renderShop() {
+        $("offers").innerHTML = "";
+        state.offers.forEach((offer, index) => {
+          const card = document.createElement("article");
+          card.className = "offer";
+          const icon = escapeHtml(offer.icon);
+          const description = offer.offerType === "item" ? offer.desc : `${offer.desc}　アピール ${offer.appeal} / バズ度 ×${offer.buzz.toFixed(2)}`;
+          card.innerHTML = `<div class="item-icon">${icon}</div><h3>${escapeHtml(offer.name)}</h3><p>${escapeHtml(description)}</p><div class="price">${offer.price}円</div><button class="button secondary" data-buy="${index}"${offer.sold ? " disabled" : ""}>${offer.sold ? "購入済み" : "購入する"}</button>`;
+          $("offers").appendChild(card);
+        });
+        $("offers").querySelectorAll("[data-buy]").forEach((button) => {
+          button.addEventListener("click", () => buyOffer(Number(button.dataset.buy)));
+        });
+        $("deckSummary").innerHTML = state.deck.map((card) => `<div class="deck-row"><span>${escapeHtml(card.icon)} ${escapeHtml(card.name)}</span><small>${card.appeal + card.growth}（+${card.growth}）×${card.buzz.toFixed(2)}</small></div>`).join("");
+        $("inventory").innerHTML = state.items.length
+          ? state.items.map((item) => `<span title="${escapeHtml(item.desc)}">${escapeHtml(item.icon)} ${escapeHtml(item.name)}</span>`).join("")
+          : '<span style="color:var(--muted);background:transparent;border-color:var(--line)">まだグッズなし</span>';
+        updateHud();
+      }
+
+      function buyOffer(index) {
+        const offer = state.offers[index];
+        if (!offer || offer.sold) return;
+        if (state.money < offer.price) {
+          toast("所持金が足りません！");
+          return;
+        }
+        state.money -= offer.price;
+        offer.sold = true;
+        if (offer.offerType === "item") {
+          state.items.push(offer);
+          toast(`${offer.name}を手に入れた！`);
+        } else {
+          state.deck.push(makeCard(offer));
+          toast(`${offer.name}をセットリストに追加！`);
+        }
+        renderShop();
+        const buttons = $("offers").querySelectorAll("[data-buy]");
+        if (buttons[index]) {
+          buttons[index].disabled = true;
+          buttons[index].textContent = "購入済み";
+        }
+      }
+
+      function beginLive() {
+        state.score = 0;
+        state.turn = 0;
+        state.combo = 0;
+        state.liveOtageBonus = 0;
+        state.firstPlay = true;
+        state.songPlays = {};
+        state.log = [];
+        showScreen("liveScreen");
+        const track = liveBgmTracks[Math.floor(Math.random() * liveBgmTracks.length)];
+        playBgm(track);
+        const venue = venues[state.stage];
+        document.body.style.setProperty("--venue-background", `url("./assets/backgrounds/${venue.background}")`);
+        $("liveEyebrow").textContent = `LIVE ${String(state.stage + 1).padStart(2, "0")} / 05`;
+        $("liveVenue").textContent = `${venue.icon} ${venue.name}`;
+        $("targetLabel").textContent = `${number(venue.target)}人`;
+        drawHand();
+        renderLive();
+        addLog("ライブスタート！最高のパフォーマンスを届けよう。");
+      }
+
+      function drawHand() {
+        const songsByName = new Map();
+        shuffle(state.deck.filter((card) => card.kind === "song")).forEach((card) => {
+          if (!songsByName.has(card.name)) songsByName.set(card.name, card);
+        });
+        const songs = [...songsByName.values()];
+        const otherCards = shuffle(state.deck.filter((card) => card.kind !== "song"));
+        state.hand = shuffle([
+          ...songs.slice(0, 2),
+          ...otherCards.slice(0, 3)
+        ]);
+        state.selected = [];
+      }
+
+      function currentAppeal(card) {
+        const appeal = card.appeal + card.growth;
+        if (card.kind !== "song") return appeal;
+        return Math.max(1, Math.floor(appeal * Math.pow(.5, state.songPlays[card.name] || 0)));
+      }
+
+      function getGrowthRange() {
+        return { min: 2 + state.stage * 4, max: 10 + state.stage * 5 };
+      }
+
+      function cardClass(card) {
+        if (card.kind === "fan") return "type-fan";
+        if (card.kind === "otage") return "type-otage";
+        return "";
+      }
+
+      function renderLive() {
+        const venue = venues[state.stage];
+        const progress = Math.min(100, state.score / venue.target * 100);
+        const selectedSongCount = getSelectedSongCount();
+        $("scoreLabel").textContent = `${number(state.score)} / ${number(venue.target)}`;
+        $("scoreProgress").style.width = `${progress}%`;
+        $("turnLabel").textContent = `${Math.min(state.turn + 1, 3)} / 3`;
+        $("comboLabel").textContent = `${state.combo} COMBO`;
+        $("selectedLabel").textContent = `${state.selected.length} / 3 枚`;
+        const growthRange = getGrowthRange();
+        $("handHint").textContent = selectedSongCount === 1
+          ? `楽曲カードを1枚選択中。使用カードのアピール成長 +${growthRange.min}～${growthRange.max}`
+          : `異なる楽曲カード2種類から1枚選んでください（成長 +${growthRange.min}～${growthRange.max}）`;
+        $("crowd").textContent = state.score > venue.target * .65 ? "☺　♥　☺　♥　☺" : state.score > venue.target * .25 ? "☺　☺　♥" : "☺　☺　☺";
+        $("hand").innerHTML = "";
+        state.hand.forEach((card) => {
+          const button = document.createElement("button");
+          button.className = `card ${cardClass(card)}${state.selected.includes(card.id) ? " selected" : ""}`;
+          button.type = "button";
+          button.setAttribute("aria-pressed", state.selected.includes(card.id));
+          const appeal = currentAppeal(card);
+          const reprise = card.kind === "song" && state.songPlays[card.name] > 0
+            ? `再演 -${Math.round((1 - appeal / (card.appeal + card.growth)) * 100)}%`
+            : "";
+          button.innerHTML = `<span class="card-icon">${escapeHtml(card.icon)}</span><span class="card-name">${escapeHtml(card.name)}</span><span class="card-kind">${escapeHtml(card.label)}</span><span class="card-stats"><span>アピール <b>${appeal}</b></span><span>×${card.buzz.toFixed(2)}</span></span><span class="card-note">${reprise}</span><span class="card-note">成長 +${card.growth}</span>`;
+          button.addEventListener("click", () => toggleCard(card.id));
+          $("hand").appendChild(button);
+        });
+        $("playButton").disabled = getSelectedSongCount() !== 1;
+      }
+
+      function getSelectedSongCount() {
+        return state.selected.filter((cardId) => state.hand.some((card) => card.id === cardId && card.kind === "song")).length;
+      }
+
+      function toggleCard(id) {
+        const selected = state.selected.includes(id);
+        if (selected) {
+          state.selected = state.selected.filter((cardId) => cardId !== id);
+        } else if (state.selected.length < 3) {
+          const card = state.hand.find((handCard) => handCard.id === id);
+          const selectedSongCount = getSelectedSongCount();
+          if (card?.kind === "song" && selectedSongCount >= 1) {
+            toast("1回のパフォーマンスで選べる楽曲カードは1枚までです");
+            return;
+          }
+          if (card?.kind === "song" && state.selected.some((cardId) => state.hand.some((handCard) => handCard.id === cardId && handCard.kind === "song" && handCard.name === card.name))) {
+            toast("異なる楽曲カードを選んでください");
+            return;
+          }
+          state.selected.push(id);
+        } else {
+          toast("一度に選べるカードは3枚までです");
+        }
+        renderLive();
+      }
+
+      function hasItem(effect) {
+        return state.items.some((item) => item.effect === effect);
+      }
+
+      function playCards() {
+        if (getSelectedSongCount() !== 1) {
+          toast("楽曲カードを1枚選んでください");
+          return;
+        }
+        const cards = state.selected.map((id) => state.hand.find((card) => card.id === id)).filter(Boolean);
+        const selectedSongs = cards.filter((card) => card.kind === "song");
+        if (selectedSongs.length !== 1) {
+          toast("楽曲カードを1枚選んでください");
+          return;
+        }
+        let showScore = 0;
+        const details = [];
+        const growthRange = getGrowthRange();
+        cards.forEach((card, cardIndex) => {
+          const baseAppeal = card.appeal + card.growth;
+          let appeal = baseAppeal;
+          let buzz = card.buzz + state.liveOtageBonus;
+          if (hasItem("light")) appeal *= 1.35;
+          if (hasItem("service") && card.kind === "fan") appeal *= 1.6;
+          if (hasItem("color") && card.color === "pink") appeal *= 2;
+          if (hasItem("songpower") && card.kind === "song") appeal *= 1.5;
+          if (hasItem("letter") && card.kind === "fan") appeal *= 1.5;
+          if (hasItem("towel") && card.kind === "otage") appeal *= 1.5;
+          if (hasItem("hashtag")) buzz *= 1.2;
+          if (hasItem("voice") && card.kind === "song") buzz += .4;
+          if (hasItem("cheki") && card.kind === "fan") buzz += .5;
+          if (card.kind === "otage" && hasItem("otage")) {
+            state.liveOtageBonus += .35;
+            buzz += .35;
+          }
+          if (hasItem("encore") && state.turn === 2) appeal *= 1.7;
+          if (hasItem("stage") && cardIndex === 0) appeal *= 1.4;
+          if (hasItem("firstsong") && card.kind === "song" && !state.songPlays[card.name]) appeal *= 1.5;
+          if (card.kind === "song") appeal = currentAppeal(card) * appeal / baseAppeal;
+          const comboMultiplier = 1 + state.combo * .12;
+          const firstMultiplier = state.firstPlay && hasItem("viral") ? 2 : 1;
+          const earned = Math.floor(appeal * buzz * comboMultiplier * firstMultiplier);
+          showScore += earned;
+          if (card.kind === "song") state.songPlays[card.name] = (state.songPlays[card.name] || 0) + 1;
+          state.combo += 1;
+          state.firstPlay = false;
+          const growth = Math.floor(Math.random() * (growthRange.max - growthRange.min + 1)) + growthRange.min;
+          card.growth += growth;
+          details.push(`${card.name} ${number(earned)}人（成長 +${growth}）`);
+        });
+        state.score += showScore;
+        state.turn += 1;
+        addLog(`${details.join(" ＋ ")} → <b>${number(showScore)}人</b>！`);
+        $("liveQuote").textContent = showScore > venues[state.stage].target * .35 ? "すごい歓声！会場が揺れてる！" : "その調子！ファンに届けよう！";
+        if (state.turn >= 3) {
+          renderLive();
+          window.setTimeout(finishLive, 450);
+          return;
+        }
+        drawHand();
+        renderLive();
+      }
+
+      function addLog(message) {
+        state.log.unshift(message);
+        state.log = state.log.slice(0, 5);
+        $("liveLog").innerHTML = state.log.map((line, index) => `<div${index === 0 ? ' class="latest"' : ""}>${line}</div>`).join("");
+      }
+
+      function finishLive() {
+        const venue = venues[state.stage];
+        const cleared = state.score >= venue.target;
+        state.fans += state.score;
+        if (cleared) {
+          const bonus = 12 + Math.floor((state.score - venue.target) / Math.max(1, venue.target) * 5) + (hasItem("tour") ? 10 : 0);
+          state.money += bonus;
+          $("resultIcon").textContent = state.stage === venues.length - 1 ? "🏟️" : "🎉";
+          $("resultEyebrow").textContent = "LIVE CLEAR!";
+          $("resultTitle").textContent = `${venue.name}を沸かせた！`;
+          $("resultMessage").textContent = `${venue.subtitle} 次のステージへ進もう。`;
+          $("resultExtra").textContent = `ライブ成功ボーナス +${bonus}円`;
+          $("resultButton").textContent = state.stage === venues.length - 1 ? "ツアーの結果を見る　▶" : "報酬を選ぶ　▶";
+          $("resultButton").onclick = () => {
+            if (state.stage === venues.length - 1) showEnding(true);
+            else openReward();
+          };
+        } else {
+          $("resultIcon").textContent = "💦";
+          $("resultEyebrow").textContent = "LIVE FAILED";
+          $("resultTitle").textContent = "目標に届かなかった…";
+          $("resultMessage").textContent = "ファンの心には届いたはず。セットリストを見直して、もう一度挑戦しよう！";
+          $("resultExtra").textContent = `目標まであと ${number(venue.target - state.score)}人`;
+          $("resultButton").textContent = "ツアー結果を見る";
+          $("resultButton").onclick = () => showEnding(false);
+        }
+        $("resultScore").textContent = `${number(state.score)}人`;
+        updateHud();
+        showScreen("resultScreen");
+      }
+
+      function openReward() {
+        state.lastReward = pickCards(2);
+        $("rewardChoices").innerHTML = "";
+        state.lastReward.forEach((card, index) => {
+          const button = document.createElement("button");
+          button.className = "reward-choice";
+          button.innerHTML = `<span class="item-icon">${escapeHtml(card.icon)}</span><h3>${escapeHtml(card.name)}</h3><p>${escapeHtml(card.desc)}<br>アピール ${card.appeal} / バズ度 ×${card.buzz.toFixed(2)}</p>`;
+          button.addEventListener("click", () => {
+            state.deck.push(card);
+            nextStage();
+          });
+          $("rewardChoices").appendChild(button);
+        });
+        showScreen("rewardScreen");
+      }
+
+      function nextStage() {
+        state.stage += 1;
+        openShop();
+      }
+
+      function showEnding(won) {
+        $("endIcon").textContent = won ? "🏟️" : "🌙";
+        $("endEyebrow").textContent = won ? "TOUR COMPLETE" : "TOUR ENDED";
+        $("endTitle").textContent = won ? "ノベルノア、ドーム満員！" : "ツアーはここで終了…";
+        $("endMessage").textContent = won
+          ? "小さな地下ライブから始まった夢が、ついに国立競技場へ。ノベルノアの伝説はここから始まる！"
+          : `${venues[state.stage].name}での挑戦はここまで。でも、今日増えたファンが次の一歩につながる。何度でも挑戦しよう！`;
+        $("endFans").textContent = `累計 ${number(state.fans)}人`;
+        showScreen("endScreen");
+      }
+
+      let toastTimer;
+      function toast(message) {
+        $("toast").textContent = message;
+        $("toast").classList.add("show");
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => $("toast").classList.remove("show"), 1800);
+      }
+
+      $("startButton").addEventListener("click", startGame);
+      $("goLiveButton").addEventListener("click", beginLive);
+      $("playButton").addEventListener("click", playCards);
+      $("skipReward").addEventListener("click", nextStage);
+      $("restartButton").addEventListener("click", startGame);
+      loadCatalogs();
+    })();
+  </script>
+</body>
+</html>
