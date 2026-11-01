@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>ライブに間に合え！</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">STATION TO LIVE HOUSE</p>
+        <h1>ライブに間に合え！</h1>
+      </div>
+      <div class="header-actions">
+        <p class="header-note">浮島を越えて、ライブハウスを目指そう。</p>
+        <button class="music-toggle" id="music-toggle" type="button" aria-pressed="true" aria-label="BGMのオン・オフを切り替える">♫ BGM：オン</button>
+      </div>
+    </header>
+
+    <section class="game-frame" aria-label="横スクロールアクションゲーム">
+      <canvas id="game" width="960" height="540" aria-label="駅からライブハウスまで走るゲーム"></canvas>
+      <audio id="bgm" src="assets/running-to-the-live-house.wav" loop preload="auto"></audio>
+
+      <div class="dialog" id="start-dialog">
+        <div class="dialog-card">
+          <p class="dialog-kicker">OPEN THE DOORS SOON</p>
+          <h2>開演まであと少し！</h2>
+          <p>制限時間は50秒。自動生成される地形や障害物をジャンプで越えてライブハウスを目指そう。上下に動く足場も活用してね。時計アイテムを取ると10秒増えるよ。</p>
+          <p class="dialog-controls"><kbd>←</kbd> <kbd>→</kbd> / <kbd>A</kbd> <kbd>D</kbd> で移動<br><kbd>Space</kbd> / <kbd>↑</kbd> でジャンプ</p>
+          <button class="primary-button" id="start-button" type="button">出発する</button>
+        </div>
+      </div>
+
+      <div class="dialog is-hidden" id="end-dialog" aria-live="polite">
+        <div class="dialog-card">
+          <p class="dialog-kicker" id="end-kicker">LIVE HOUSE</p>
+          <h2 id="end-title">ライブハウスに到着！</h2>
+          <p id="end-message"></p>
+          <button class="primary-button" id="restart-button" type="button">もう一度遊ぶ</button>
+        </div>
+      </div>
+
+      <div class="touch-controls" aria-label="タッチ操作">
+        <div class="direction-controls">
+          <button class="touch-button" type="button" data-key="ArrowLeft" aria-label="左へ移動">←</button>
+          <button class="touch-button" type="button" data-key="ArrowRight" aria-label="右へ移動">→</button>
+        </div>
+        <button class="touch-button jump-button" type="button" data-key="Space" aria-label="ジャンプ">JUMP</button>
+      </div>
+    </section>
+
+    <footer class="page-footer">
+      <span>走って、跳んで、開演に間に合おう。</span>
+      <span>BGM：オリジナル制作・CC0（帰属表示不要）</span>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
