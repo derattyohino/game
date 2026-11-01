@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#100d1c">
+  <meta name="description" content="ノベルノアのゲームを選んで遊ぼう。ライブ、冒険、パズルなど6つのブラウザゲームを紹介。">
+  <title>NOVA GAME ARCADE — ゲームセレクト</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Yu Gothic UI", "Yu Gothic", Meiryo, sans-serif;
+      background: #100d1c;
+      color: #fff9f5;
+      font-synthesis: none;
+      --muted: #aaa4bd;
+      --line: rgba(255, 255, 255, .12);
+      --pink: #ff78b9;
+      --violet: #ad8aff;
+      --cyan: #79e7e8;
+      --gold: #ffd889;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 50% -24%, rgba(128, 77, 158, .32), transparent 55%),
+        radial-gradient(ellipse at 100% 52%, rgba(46, 105, 141, .12), transparent 35%),
+        #100d1c;
+    }
+
+    a { color: inherit; }
+    .page { width: min(1120px, calc(100% - 44px)); margin: 0 auto; }
+    .topbar {
+      height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, .24);
+      border-radius: 14px;
+      background: linear-gradient(145deg, #ff9acb, #9b75ee);
+      box-shadow: 0 5px 24px rgba(221, 110, 211, .24);
+      color: white;
+      font-size: 22px;
+    }
+    .brand-name { display: block; font-size: 14px; font-weight: 900; letter-spacing: .12em; }
+    .brand-sub { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; letter-spacing: .2em; }
+    .topbar-status {
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #ded8eb;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .hero {
+      position: relative;
+      display: grid;
+      min-height: 390px;
+      align-items: center;
+      margin: 28px 0 64px;
+      padding: clamp(32px, 7vw, 78px);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 28px;
+      background:
+        linear-gradient(100deg, rgba(20, 14, 33, .97) 0%, rgba(20, 14, 33, .82) 48%, rgba(20, 14, 33, .24) 100%),
+        url("./アイドル/assets/backgrounds/national-stadium.jpg") center 48% / cover,
+        #29213c;
+      box-shadow: 0 26px 90px rgba(0,0,0,.32);
+    }
+    .hero::after {
+      position: absolute;
+      right: 7%;
+      bottom: -96px;
+      width: 270px;
+      height: 270px;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 50%;
+      box-shadow: 0 0 0 24px rgba(255,255,255,.025), 0 0 0 50px rgba(255,255,255,.02);
+      content: "";
+      pointer-events: none;
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 590px; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 18px;
+      color: #ffc3df;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .22em;
+    }
+    .eyebrow::before {
+      width: 22px;
+      height: 1px;
+      background: currentColor;
+      content: "";
+    }
+    h1 { margin: 0; font-size: clamp(36px, 6vw, 66px); line-height: 1.14; letter-spacing: .045em; }
+    h1 span {
+      color: transparent;
+      background: linear-gradient(90deg, #ff9bc9, #c2a5ff 75%);
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+    .hero-copy { max-width: 430px; margin: 18px 0 26px; color: #d3ccdf; font-size: 14px; line-height: 1.9; }
+    .hero-meta { display: flex; align-items: center; gap: 13px; color: #c1b9d1; font-size: 11px; }
+    .hero-meta strong { color: white; letter-spacing: .12em; }
+    .hero-meta-mark { width: 1px; height: 16px; background: rgba(255,255,255,.28); }
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .section-kicker { margin: 0 0 7px; color: var(--cyan); font-size: 9px; font-weight: 900; letter-spacing: .24em; }
+    h2 { margin: 0; font-size: clamp(24px, 3.5vw, 32px); letter-spacing: .035em; }
+    .section-note { margin: 0 2px 3px; color: var(--muted); font-size: 11px; }
+    .game-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .game-card {
+      --accent: var(--pink);
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 19px;
+      background: linear-gradient(155deg, rgba(43, 35, 58, .92), rgba(24, 21, 37, .98));
+      box-shadow: 0 12px 35px rgba(0,0,0,.16);
+      transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+    }
+    .game-card:hover {
+      transform: translateY(-5px);
+      border-color: color-mix(in srgb, var(--accent) 62%, white 8%);
+      box-shadow: 0 18px 42px rgba(0,0,0,.28), 0 0 28px color-mix(in srgb, var(--accent) 12%, transparent);
+    }
+    .game-card:nth-child(2) { --accent: #ff9e89; }
+    .game-card:nth-child(3) { --accent: #b19aff; }
+    .game-card:nth-child(4) { --accent: #85dcff; }
+    .game-card:nth-child(5) { --accent: #bba2ff; }
+    .game-card:nth-child(6) { --accent: #ff83c4; }
+    .cover {
+      position: relative;
+      display: grid;
+      height: 172px;
+      overflow: hidden;
+      isolation: isolate;
+      background: radial-gradient(ellipse at 50% 115%, color-mix(in srgb, var(--accent) 48%, transparent), transparent 58%), #252037;
+    }
+    .cover::before, .cover::after {
+      position: absolute;
+      z-index: -1;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 50%;
+      content: "";
+    }
+    .cover::before { width: 210px; height: 210px; }
+    .cover::after { width: 270px; height: 270px; }
+    .cover iframe {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 285.714%;
+      height: 285.714%;
+      border: 0;
+      background: #100d1c;
+      pointer-events: none;
+      transform: scale(.35);
+      transform-origin: top left;
+    }
+    .cover-title {
+      position: absolute;
+      right: 15px;
+      bottom: 13px;
+      left: 15px;
+      color: white;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-shadow: 0 2px 12px #100d1c;
+    }
+    .card-body { display: flex; flex: 1; flex-direction: column; padding: 17px 18px 16px; }
+    .card-topline { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+    .genre { color: var(--accent); font-size: 9px; font-weight: 900; letter-spacing: .14em; }
+    .index { color: #77718b; font-size: 10px; font-variant-numeric: tabular-nums; }
+    .card-body h3 { margin: 0; font-size: 18px; letter-spacing: .02em; }
+    .description { min-height: 49px; margin: 8px 0 15px; color: #bcb6ca; font-size: 11px; line-height: 1.8; }
+    .card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; }
+    .tag { color: #8e879e; font-size: 9px; }
+    .play-link {
+      display: inline-flex;
+      min-height: 35px;
+      align-items: center;
+      gap: 9px;
+      padding: 0 13px;
+      border: 1px solid color-mix(in srgb, var(--accent) 36%, transparent);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 10%, transparent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      text-decoration: none;
+      transition: background .2s;
+    }
+    .play-link:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+    a:focus-visible { outline: 3px solid white; outline-offset: 4px; }
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      margin-top: 42px;
+      padding: 18px 0 24px;
+      border-top: 1px solid var(--line);
+      color: #777187;
+      font-size: 10px;
+    }
+    .footer strong { color: #bcb5c9; letter-spacing: .12em; }
+
+    @media (max-width: 820px) {
+      .game-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hero { min-height: 350px; }
+      .hero::after { right: -60px; }
+    }
+    @media (max-width: 540px) {
+      .page { width: min(100% - 28px, 430px); }
+      .topbar { height: 68px; }
+      .topbar-status { padding: 7px 9px; font-size: 9px; }
+      .hero { min-height: 375px; margin: 18px 0 45px; padding: 28px 23px; border-radius: 21px; background-position: center, 60% center, center; }
+      .hero-copy { font-size: 12px; }
+      .hero::after { right: -125px; bottom: -135px; }
+      .section-heading { align-items: start; flex-direction: column; gap: 7px; }
+      .game-grid { grid-template-columns: 1fr; gap: 14px; }
+      .cover { height: 172px; }
+      .cover-title { font-size: 8px; right: 9px; left: 9px; }
+      .card-body { padding: 14px 13px 13px; }
+      .card-body h3 { font-size: 16px; }
+      .description { min-height: 0; margin-bottom: 12px; font-size: 10px; }
+      .tag { max-width: 78px; line-height: 1.5; }
+      .footer { flex-direction: column; margin-top: 30px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="NOVA GAME ARCADE ホーム">
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <span><span class="brand-name">NOVA GAME ARCADE</span><span class="brand-sub">NOVEL NOA UNIVERSE</span></span>
+      </a>
+      <span class="topbar-status">6 GAMES · PLAY IN BROWSER</span>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-content">
+          <p class="eyebrow">WELCOME TO THE ARCADE</p>
+          <h1 id="hero-title">次の遊びへ、<br><span>ログイン。</span></h1>
+          <p class="hero-copy">ライブの熱狂も、ひらめきの連鎖も。ノベルノアの世界から、気になるゲームを選んで出発しよう。</p>
+          <div class="hero-meta">
+            <strong>6 TITLES</strong>
+            <span class="hero-meta-mark" aria-hidden="true"></span>
+            <span>インストール不要ですぐ遊べる</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="games" aria-labelledby="games-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">SELECT YOUR STAGE</p>
+            <h2 id="games-title">ゲームセレクト</h2>
+          </div>
+          <p class="section-note">気になるタイトルを選んで、冒険をはじめよう。</p>
+        </div>
+
+        <div class="game-grid">
+          <article class="game-card">
+            <div class="cover cover-idol">
+              <iframe src="./アイドル/index.html" title="アイドル・インフレの開始画面" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe>
+              <span class="cover-title">ONE SONG TO THE DOME</span>
+            </div>
+            <div class="card-body">
+              <div class="card-topline"><span class="genre">DECKBUILDING · IDOL</span><span class="index">NO. 01</span></div>
+              <h3>アイドル・インフレ</h3>
+              <p class="description">カードとアイテムでライブを組み立て、地下アイドルをドームの頂点へ導こう。</p>
+              <div class="card-bottom"><span class="tag">戦略 / デッキ構築</span><a class="play-link" href="./アイドル/index.html">プレイする <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+
+          <article class="game-card">
+            <div class="cover cover-run">
+              <iframe src="./ノベノア_アクション/index.html" title="開演まであと少し！の開始画面" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe>
+              <span class="cover-title">SHINJUKU → LIVE HOUSE</span>
+            </div>
+            <div class="card-body">
+              <div class="card-topline"><span class="genre">ACTION · RUN</span><span class="index">NO. 02</span></div>
+              <h3>開演まであと少し！</h3>
+              <p class="description">障害物をジャンプでかわして、新宿からライブハウスへ。開演時間に間に合う？</p>
+              <div class="card-bottom"><span class="tag">アクション / タイムアタック</span><a class="play-link" href="./ノベノア_アクション/index.html">プレイする <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+
+          <article class="game-card">
+            <div class="cover">
+              <iframe src="./ノベノア_スイカ/index.html" title="ノベルノアのしずくの開始画面" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe>
+              <span class="cover-title">DROP · MERGE · EVOLVE</span>
+            </div>
+            <div class="card-body">
+              <div class="card-topline"><span class="genre">PUZZLE · MERGE</span><span class="index">NO. 03</span></div>
+              <h3>ノベルノアのしずく</h3>
+              <p class="description">しずくを落として同じ仲間を合体！進化ルートをたどって、5人の名前をつなげよう。</p>
+              <div class="card-bottom"><span class="tag">パズル / 合体</span><a class="play-link" href="./ノベノア_スイカ/index.html">プレイする <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+
+          <article class="game-card">
+            <div class="cover">
+              <iframe src="./ノベノア_マリオ/index.html" title="ライブに間に合え！の開始画面" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe>
+              <span class="cover-title">STATION TO LIVE HOUSE</span>
+            </div>
+            <div class="card-body">
+              <div class="card-topline"><span class="genre">ACTION · PLATFORMER</span><span class="index">NO. 04</span></div>
+              <h3>ライブに間に合え！</h3>
+              <p class="description">走って、跳んで、浮島を越えよう。制限時間内にライブハウスへたどり着け！</p>
+              <div class="card-bottom"><span class="tag">横スクロール / ジャンプ</span><a class="play-link" href="./ノベノア_マリオ/index.html">プレイする <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+
+          <article class="game-card">
+            <div class="cover">
+              <iframe src="./ノベルノア_pazzle/index.html" title="パズル＆ノベルノアの開始画面" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe>
+              <span class="cover-title">LINK YOUR COLORS</span>
+            </div>
+            <div class="card-body">
+              <div class="card-topline"><span class="genre">PUZZLE · BATTLE</span><span class="index">NO. 05</span></div>
+              <h3>パズル＆ノベルノア</h3>
+              <p class="description">同じ色のピースをそろえて仲間のスキルを発動。連鎖をつないで5体のボスに挑もう。</p>
+              <div class="card-bottom"><span class="tag">マッチパズル / バトル</span><a class="play-link" href="./ノベルノア_pazzle/index.html">プレイする <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+
+          <article class="game-card">
+            <div class="cover">
+              <iframe src="./ファンサ/index.html" title="レスくれ！の開始画面" loading="lazy" scrolling="no" tabindex="-1" aria-hidden="true"></iframe>
+              <span class="cover-title">IDOLS &amp; LIGHTSTICKS</span>
+            </div>
+            <div class="card-body">
+              <div class="card-topline"><span class="genre">RHYTHM · LIVE</span><span class="index">NO. 06</span></div>
+              <h3>レスくれ！</h3>
+              <p class="description">光るペンライトで推しに想いを届けよう。曲が終わるまでに目標ボルテージを目指せ！</p>
+              <div class="card-bottom"><span class="tag">ライブ / スコアアタック</span><a class="play-link" href="./ファンサ/index.html">プレイする <span aria-hidden="true">→</span></a></div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <strong>NOVA GAME ARCADE</strong>
+      <span>好きなステージから、気軽に遊んでいってね。</span>
+    </footer>
+  </div>
+</body>
+</html>
