@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻辣湯ドラフト (Malatang Draft Card Game)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #1a0808;
+            color: #fff;
+            user-select: none;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        .soup-gradient {
+            background: radial-gradient(circle at center, #8a1414 0%, #3d0505 70%, #1a0808 100%);
+        }
+
+        .gold-border {
+            border: 2px solid #e5c158;
+        }
+
+        .gold-text {
+            color: #f7d070;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* Card Flip & Animation */
+        .card-enter {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.6) translateY(20px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .bowl-item {
+            animation: dropIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .soup-pot {
+            position: absolute;
+            inset: 3px 4%;
+            padding: 7px;
+            border: 3px solid #f4d18c;
+            border-radius: 48% / 44%;
+            background: linear-gradient(145deg, #f8e6bd, #a96732 72%, #713b24);
+            box-shadow: 0 7px 12px rgba(0, 0, 0, 0.55), inset 0 2px 5px rgba(255, 255, 255, 0.55);
+        }
+
+        .soup-broth {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border: 3px solid rgba(255, 221, 159, 0.8);
+            border-radius: 48% / 44%;
+            background: radial-gradient(ellipse at 50% 40%, #a72b15 0%, #74140d 54%, #3a0806 100%);
+            box-shadow: inset 0 5px 16px rgba(54, 4, 0, 0.65);
+        }
+
+        .soup-broth::before {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background-image: radial-gradient(circle, rgba(255, 211, 125, 0.7) 1px, transparent 2px);
+            background-size: 37px 31px;
+            content: "";
+            opacity: 0.45;
+            pointer-events: none;
+        }
+
+        .soup-ingredients {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .soup-ingredient {
+            position: absolute;
+            top: var(--y);
+            left: var(--x);
+            display: grid;
+            width: var(--item-width, 68px);
+            height: var(--item-height, 52px);
+            place-items: center;
+            translate: -50% -50%;
+            filter: drop-shadow(0 3px 3px rgba(27, 4, 0, 0.65));
+            animation: soupDropIn 0.55s cubic-bezier(0.2, 1.4, 0.5, 1) both;
+        }
+
+        .soup-ingredient img {
+            display: block;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .hand-card {
+            width: 6rem;
+            height: 8rem;
+            padding: 0.4rem;
+        }
+
+        .hand-card-icon {
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        .hand-card-copy {
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .hand-card-name {
+            display: -webkit-box;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+
+        .card-description {
+            display: -webkit-box;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+        }
+
+        .cpu-bowl {
+            max-height: 76px;
+            align-content: flex-start;
+            overflow-y: auto;
+        }
+
+        main {
+            min-height: 0;
+            padding-bottom: max(4px, env(safe-area-inset-bottom)) !important;
+        }
+
+        #cpu-opponents,
+        #player-hand-panel {
+            flex: 0 0 auto;
+        }
+
+        #player-bowl-panel {
+            min-height: 0;
+            flex: 1 1 0%;
+        }
+
+        #player-bowl {
+            min-height: 0;
+            flex: 1 1 0%;
+        }
+
+        .final-result-modal {
+            animation: finalOverlay 0.45s ease-out both;
+        }
+
+        .result-food-backdrop {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background: url("png/最終結果.png") center / cover no-repeat;
+            opacity: 0.55;
+            pointer-events: none;
+        }
+
+        .result-light-burst {
+            position: absolute;
+            inset: -50%;
+            z-index: 0;
+            background: repeating-conic-gradient(from 0deg, rgba(255, 217, 115, 0.16) 0deg 7deg, transparent 7deg 18deg);
+            mask-image: radial-gradient(ellipse, #000 0%, transparent 68%);
+            -webkit-mask-image: radial-gradient(ellipse, #000 0%, transparent 68%);
+            animation: lightBurst 22s linear infinite;
+            pointer-events: none;
+        }
+
+        .final-result-card {
+            position: relative;
+            z-index: 1;
+            animation: finalCardReveal 0.65s cubic-bezier(0.18, 0.9, 0.32, 1.15) both;
+            box-shadow: 0 0 24px rgba(251, 191, 36, 0.22), 0 0 80px rgba(220, 38, 38, 0.25), 0 24px 80px rgba(0, 0, 0, 0.8);
+        }
+
+        .final-result-badge {
+            animation: trophyReveal 1.1s cubic-bezier(0.2, 1.4, 0.5, 1) 0.2s both, trophyGlow 1.4s ease-in-out 1.3s infinite alternate;
+        }
+
+        .winner-announcement {
+            animation: winnerReveal 0.7s ease-out 0.65s both, winnerGlow 1.5s ease-in-out 1.35s infinite alternate;
+        }
+
+        .final-score-row {
+            opacity: 0;
+            animation: scoreReveal 0.45s ease-out calc(0.35s + var(--rank) * 0.13s) forwards;
+        }
+
+        .final-score-value {
+            display: inline-block;
+            min-width: 2ch;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            top: -8%;
+            left: var(--x);
+            z-index: 0;
+            width: var(--size);
+            height: calc(var(--size) * 1.7);
+            border-radius: 2px;
+            background: var(--color);
+            opacity: 0;
+            animation: confettiFall var(--duration) cubic-bezier(0.2, 0.65, 0.4, 1) var(--delay) forwards;
+            pointer-events: none;
+        }
+
+        .confetti-piece:nth-child(3n) {
+            border-radius: 50%;
+        }
+
+        @keyframes finalOverlay {
+            from { background-color: rgba(0, 0, 0, 0); }
+            to { background-color: rgba(0, 0, 0, 0.9); }
+        }
+
+        @keyframes lightBurst {
+            from { rotate: 0deg; scale: 0.9; opacity: 0.35; }
+            50% { scale: 1.1; opacity: 0.7; }
+            to { rotate: 360deg; scale: 0.9; opacity: 0.35; }
+        }
+
+        @keyframes finalCardReveal {
+            from { transform: translateY(28px) scale(0.88); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes trophyReveal {
+            0% { transform: translateY(-45px) scale(0.2) rotate(-30deg); opacity: 0; }
+            70% { transform: translateY(5px) scale(1.25) rotate(8deg); opacity: 1; }
+            100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+        }
+
+        @keyframes trophyGlow {
+            from { transform: scale(1); filter: drop-shadow(0 0 3px rgba(255, 196, 60, 0.3)); }
+            to { transform: scale(1.12); filter: drop-shadow(0 0 24px rgba(255, 196, 60, 1)); }
+        }
+
+        @keyframes winnerReveal {
+            from { transform: translateY(12px) scale(0.8); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes winnerGlow {
+            from { text-shadow: 0 0 5px rgba(251, 191, 36, 0.35); }
+            to { text-shadow: 0 0 22px rgba(251, 191, 36, 0.95), 0 0 42px rgba(239, 68, 68, 0.6); }
+        }
+
+        @keyframes scoreReveal {
+            from { transform: translateY(14px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translate3d(0, -10vh, 0) rotate(0); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translate3d(var(--drift), 110vh, 0) rotate(720deg); opacity: 0.9; }
+        }
+
+        @keyframes soupDropIn {
+            0% { transform: translateY(-38px) scale(0.35) rotate(-25deg); opacity: 0; }
+            70% { transform: translateY(3px) scale(1.12) rotate(5deg); opacity: 1; }
+            100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+        }
+
+        @keyframes dropIn {
+            0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        @media (max-height: 760px) {
+            header {
+                padding-top: 0.4rem;
+                padding-bottom: 0.4rem;
+            }
+
+            main {
+                gap: 0.5rem !important;
+                padding-top: 0.5rem !important;
+                padding-bottom: max(4px, env(safe-area-inset-bottom)) !important;
+            }
+
+            .cpu-panel {
+                padding: 0.5rem !important;
+            }
+
+            #player-bowl {
+                min-height: 100px !important;
+            }
+
+            .soup-ingredient {
+                width: min(var(--item-width, 136px), 108px);
+                height: min(var(--item-height, 104px), 80px);
+            }
+
+            #player-hand {
+                min-height: 124px !important;
+            }
+
+            .hand-card {
+                width: 5.5rem;
+                height: 7.5rem;
+                padding: 0.35rem;
+            }
+
+            #player-hand-panel {
+                padding-bottom: 0.35rem !important;
+            }
+
+            .soup-ingredient {
+                width: min(var(--item-width, 136px), 80px);
+                height: min(var(--item-height, 104px), 64px);
+            }
+
+            #player-ingredient-icons .player-ingredient-icon {
+                width: 25px;
+                height: 25px;
+            }
+
+            #start-modal > div {
+                max-height: 98vh;
+                padding: 0.9rem;
+            }
+
+            #start-modal > div > div:first-child {
+                margin-bottom: 0.6rem;
+            }
+        }
+
+        @media (max-width: 639px) {
+            header > div {
+                flex-direction: column;
+                gap: 0.4rem;
+            }
+
+            header > div > div:first-child {
+                justify-content: center;
+            }
+
+            header > div > div:nth-child(2) {
+                display: grid;
+                grid-template-columns: repeat(2, max-content);
+                justify-content: center;
+                gap: 0.35rem !important;
+            }
+
+            header > div > div:nth-child(2) > * {
+                margin-left: 0 !important;
+            }
+
+            header > div > div:nth-child(2) > div {
+                padding: 0.25rem 0.5rem;
+            }
+
+            header > div > div:nth-child(2) > button {
+                padding: 0.35rem 0.5rem !important;
+            }
+        }
+
+        @media (max-height: 640px) {
+            #cpu-opponents .cpu-panel {
+                padding: 0.35rem !important;
+            }
+
+            #cpu-opponents .cpu-panel > div:first-child {
+                margin-bottom: 0.2rem !important;
+            }
+
+            .cpu-bowl {
+                min-height: 24px !important;
+                max-height: 30px;
+                padding: 0.25rem !important;
+            }
+
+            #player-bowl-panel {
+                padding: 0.35rem !important;
+            }
+
+            #player-bowl-panel > div:first-child {
+                margin-bottom: 0 !important;
+            }
+
+            #player-bowl-panel > div:nth-child(2),
+            #player-bowl-panel > a {
+                display: none;
+            }
+
+            #player-hand {
+                min-height: 124px !important;
+            }
+        }
+
+        @media (max-height: 560px) and (max-width: 639px) {
+            header > div {
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 0.3rem;
+            }
+
+            header > div > div:first-child {
+                justify-content: flex-start;
+            }
+
+            header > div > div:nth-child(2) > div {
+                padding: 0.15rem 0.35rem;
+            }
+
+            header > div > div:nth-child(2) > button {
+                padding: 0.25rem 0.35rem !important;
+            }
+
+            #cpu-opponents {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 0.25rem !important;
+            }
+
+            #cpu-opponents .cpu-panel {
+                padding: 0.25rem !important;
+            }
+
+            #cpu-opponents .cpu-panel > div:first-child {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            #cpu-opponents .cpu-panel > div:first-child > div {
+                gap: 0.15rem !important;
+            }
+
+            #cpu-opponents .cpu-panel > div:first-child > div > span:first-child,
+            #cpu-opponents .cpu-bowl {
+                display: none;
+            }
+
+            #cpu-opponents .cpu-panel > div:first-child > div > span:last-child {
+                font-size: 0.6rem;
+            }
+        }
+
+        @media (min-width: 640px) {
+            #cpu-opponents {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .final-result-modal,
+            .final-result-card,
+            .final-result-badge,
+            .result-light-burst,
+            .winner-announcement,
+            .final-score-row,
+            .confetti-piece,
+            .soup-ingredient {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2b0c0c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #b91c1c;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen soup-gradient flex flex-col justify-between overflow-x-hidden">
+
+    <!-- HEADER / GAME STATUS -->
+    <header class="bg-black/60 backdrop-blur border-b border-red-900/50 px-3 py-2 sticky top-0 z-30 shadow-lg">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl">🍲</span>
+                <div>
+                    <h1 class="text-lg md:text-xl font-extrabold text-red-500 tracking-wider">麻辣湯ドラフト</h1>
+                    <p class="text-xs text-amber-200/70">オリジナル具材で最高の1杯を作れ！</p>
+                </div>
+            </div>
+
+            <!-- Round & Score tracker -->
+            <div class="flex items-center space-x-4 md:space-x-8 text-sm md:text-base">
+                <div class="bg-red-950/80 px-3 py-1.5 rounded-xl border border-red-800">
+                    <span class="text-xs text-amber-300/80 block">ラウンド</span>
+                    <span class="font-bold text-lg text-amber-400" id="round-display">1 / 3</span>
+                </div>
+                <div class="bg-red-950/80 px-3 py-1.5 rounded-xl border border-red-800">
+                    <span class="text-xs text-amber-300/80 block">現在の合計スコア</span>
+                    <span class="font-bold text-lg text-amber-400" id="total-score-display">0 pt</span>
+                </div>
+                <button id="rules-btn" class="bg-amber-600 hover:bg-amber-500 text-white p-2 rounded-lg text-xs md:text-sm font-bold transition">
+                    <i class="fa-solid fa-book-open mr-1"></i> ルール
+                </button>
+                <button id="bgm-btn" class="bg-red-900 hover:bg-red-800 text-white p-2 rounded-lg text-xs md:text-sm font-bold transition" aria-label="BGMを再生">
+                    <i class="fa-solid fa-music mr-1"></i><span id="bgm-label">BGM OFF</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN GAME AREA -->
+    <main class="max-w-6xl mx-auto w-full p-2 md:p-4 flex-1 flex flex-col gap-2 md:gap-3">
+
+        <!-- CPU OPPONENTS BOWLS OVERVIEW -->
+        <div id="cpu-opponents" class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+            <div class="cpu-panel bg-black/40 rounded-2xl p-2 md:p-3 border border-red-950/60 backdrop-blur-sm">
+                <div class="flex justify-between items-center mb-1 md:mb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg">⭐</span>
+                        <span class="whitespace-nowrap font-bold text-xs text-gray-200">星野さゆ</span>
+                    </div>
+                    <span class="shrink-0 whitespace-nowrap text-[10px] bg-red-900/40 text-amber-300 px-1.5 py-0.5 rounded-full border border-red-800/40" id="cpu1-score">0 pt</span>
+                </div>
+                <div id="cpu1-bowl" class="cpu-bowl flex flex-wrap gap-1 min-h-[38px] p-1.5 bg-red-950/30 rounded-xl border border-dashed border-red-900/40">
+                    <!-- Cards played by CPU 1 -->
+                </div>
+            </div>
+
+            <div class="cpu-panel bg-black/40 rounded-2xl p-2 md:p-3 border border-red-950/60 backdrop-blur-sm">
+                <div class="flex justify-between items-center mb-1 md:mb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg">😈</span>
+                        <span class="whitespace-nowrap font-bold text-xs text-gray-200">さたん</span>
+                    </div>
+                    <span class="shrink-0 whitespace-nowrap text-[10px] bg-red-900/40 text-amber-300 px-1.5 py-0.5 rounded-full border border-red-800/40" id="cpu2-score">0 pt</span>
+                </div>
+                <div id="cpu2-bowl" class="cpu-bowl flex flex-wrap gap-1 min-h-[38px] p-1.5 bg-red-950/30 rounded-xl border border-dashed border-red-900/40">
+                    <!-- Cards played by CPU 2 -->
+                </div>
+            </div>
+
+            <div class="cpu-panel bg-black/40 rounded-2xl p-2 md:p-3 border border-red-950/60 backdrop-blur-sm">
+                <div class="flex justify-between items-center mb-1 md:mb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg">🐰</span>
+                        <span class="whitespace-nowrap font-bold text-xs text-gray-200">兎二角あう</span>
+                    </div>
+                    <span class="shrink-0 whitespace-nowrap text-[10px] bg-red-900/40 text-amber-300 px-1.5 py-0.5 rounded-full border border-red-800/40" id="cpu3-score">0 pt</span>
+                </div>
+                <div id="cpu3-bowl" class="cpu-bowl flex flex-wrap gap-1 min-h-[38px] p-1.5 bg-red-950/30 rounded-xl border border-dashed border-red-900/40">
+                    <!-- Cards played by CPU 3 -->
+                </div>
+            </div>
+
+            <div class="cpu-panel bg-black/40 rounded-2xl p-2 md:p-3 border border-red-950/60 backdrop-blur-sm">
+                <div class="flex justify-between items-center mb-1 md:mb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg">🍑</span>
+                        <span class="whitespace-nowrap font-bold text-xs text-gray-200">茉白もも</span>
+                    </div>
+                    <span class="shrink-0 whitespace-nowrap text-[10px] bg-red-900/40 text-amber-300 px-1.5 py-0.5 rounded-full border border-red-800/40" id="cpu4-score">0 pt</span>
+                </div>
+                <div id="cpu4-bowl" class="cpu-bowl flex flex-wrap gap-1 min-h-[38px] p-1.5 bg-red-950/30 rounded-xl border border-dashed border-red-900/40">
+                    <!-- Cards played by CPU 4 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- PLAYER'S BOWL (MY MALATANG) -->
+        <div id="player-bowl-panel" class="bg-gradient-to-b from-red-950/70 to-black/60 rounded-2xl p-2 md:p-3 border-2 border-amber-600/40 shadow-2xl relative overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center mb-1">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">🥣</span>
+                    <div>
+                        <h2 class="font-bold text-base md:text-lg text-amber-300">あなたの麻辣湯</h2>
+                        <p class="text-xs text-gray-400" id="action-prompt">手札から具材を選んでスープに投入してください</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div id="chopsticks-badge" class="hidden bg-amber-500/20 text-amber-300 border border-amber-500 text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
+                        🥚 うずら卵 発動中 (2枚選択可能)
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex min-h-8 items-center gap-2 px-1 pb-1">
+                <span class="shrink-0 text-[10px] font-bold text-amber-200/80">投入した具材</span>
+                <div id="player-ingredient-icons" class="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto"></div>
+            </div>
+
+            <!-- Bowl Visual Area -->
+            <div id="player-bowl" class="relative min-h-[135px] overflow-hidden rounded-xl" role="img" aria-label="空の麻辣湯">
+                <div class="soup-pot">
+                    <div class="soup-broth">
+                        <div id="soup-ingredients" class="soup-ingredients"></div>
+                    </div>
+                </div>
+                <p id="empty-bowl-msg" class="absolute inset-0 z-10 m-auto flex h-fit items-center justify-center text-xs text-amber-100/80 drop-shadow">具材を選んでスープに入れよう</p>
+            </div>
+        </div>
+
+        <!-- PLAYER'S HAND & ACTION BAR -->
+        <div id="player-hand-panel" class="bg-black/60 rounded-2xl p-2 md:p-3 border border-red-900/50 backdrop-blur">
+            <div class="flex justify-between items-center mb-1 px-1">
+                <span class="text-xs font-bold text-amber-200/80 uppercase tracking-wider">
+                    <i class="fa-solid fa-hand-pointer mr-1"></i> あなたの手札 (選んだら次のプレイヤーに回ります)
+                </span>
+                <button id="confirm-btn" disabled class="bg-gray-700 text-gray-400 cursor-not-allowed font-bold px-5 py-1.5 rounded-xl text-sm transition shadow-md">
+                    具材を入れる
+                </button>
+            </div>
+
+            <!-- Hand Cards Container -->
+            <div id="player-hand" class="flex gap-2 md:gap-3 overflow-x-auto pb-1 pt-1 min-h-[136px] items-center">
+                <!-- Dynamic Cards -->
+            </div>
+        </div>
+    </main>
+
+    <!-- GAME START / RULES -->
+    <div id="start-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-3 md:p-6">
+        <div class="bg-gradient-to-b from-gray-900 to-red-950 border-2 border-amber-500 rounded-2xl p-5 md:p-7 max-w-3xl w-full max-h-[98vh] overflow-y-auto shadow-2xl card-enter">
+            <div class="text-center mb-5">
+                <div class="text-5xl mb-2">🍲</div>
+                <h2 class="text-2xl md:text-3xl font-black text-amber-400">麻辣湯ドラフト</h2>
+                <p class="text-sm text-gray-300 mt-1">ルールを読んで、最高の一杯を作ろう！</p>
+            </div>
+
+            <div class="bg-black/40 border border-red-800/60 rounded-xl p-3 mb-3">
+                <h3 class="font-bold text-amber-300 mb-1">遊び方</h3>
+                <ol class="list-decimal list-inside space-y-0.5 text-xs md:text-sm text-gray-200">
+                    <li>あなたとCPU4人で、全3ラウンドを遊びます。</li>
+                    <li>各ラウンドの手札8枚から具材を選び、「具材を入れる」を押します。CPUも同時に選び、うずら卵を使うCPUは2枚取ります。</li>
+                    <li>残った手札は隣の人から受け取り、具材を選ぶ手順を繰り返します。</li>
+                    <li>ラウンドごとの得点と、団子の最終ボーナスを合わせた合計点を競います。</li>
+                </ol>
+                <p class="text-xs text-amber-200/80 mt-2">🥚 うずら卵を出すと、次の手番に2枚選べます。使った卵は手札に戻ります。</p>
+            </div>
+
+            <div class="bg-black/40 border border-red-800/60 rounded-xl p-3 mb-3">
+                <h3 class="font-bold text-amber-300 mb-2">得点ルール</h3>
+                <div class="grid grid-cols-2 gap-1.5 text-xs text-gray-200">
+                    <div class="bg-red-950/50 rounded-lg p-2"><span class="font-bold text-amber-300">🍜 板春雨</span><p class="mt-0.5">1枚=1点、2枚=3点、3枚以上は1枚につき6点</p></div>
+                    <div class="bg-red-950/50 rounded-lg p-2"><span class="font-bold text-amber-300">🍄 きくらげ</span><p class="mt-0.5">2枚ごとに5点</p></div>
+                    <div class="bg-red-950/50 rounded-lg p-2"><span class="font-bold text-amber-300">🥩 牛・ラム肉</span><p class="mt-0.5">3枚ごとに10点</p></div>
+                    <div class="bg-red-950/50 rounded-lg p-2"><span class="font-bold text-amber-300">🥖 油条</span><p class="mt-0.5">1枚=1点、2枚=3点、3枚=6点…</p></div>
+                    <div class="bg-red-950/50 rounded-lg p-2"><span class="font-bold text-amber-300">🧂 花椒スパイス</span><p class="mt-0.5">肉・板春雨1枚につき6点追加</p></div>
+                    <div class="bg-red-950/50 rounded-lg p-2"><span class="font-bold text-amber-300">🥬 チンゲン菜</span><p class="mt-0.5">最多6点、2位3点</p></div>
+                    <div class="bg-red-950/50 rounded-lg p-2"><span class="font-bold text-amber-300">🥚 うずら卵</span><p class="mt-0.5">次の手番に2枚選べる</p></div>
+                    <div class="bg-red-950/50 rounded-lg p-2"><span class="font-bold text-amber-300">🍡 サーカス団子</span><p class="mt-0.5">3ラウンド通算。最多+6点、最少-6点</p></div>
+                </div>
+            </div>
+
+            <button id="start-game-btn" class="sticky bottom-0 z-10 w-full bg-gradient-to-r from-amber-500 via-red-600 to-amber-500 hover:opacity-90 font-black py-2.5 rounded-xl text-base text-white shadow-xl transition">
+                ゲームスタート 🍲
+            </button>
+        </div>
+    </div>
+
+    <!-- ROUND SCORE MODAL -->
+    <div id="round-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-gray-900 to-red-950 border-2 border-amber-500 rounded-2xl p-4 md:p-6 max-w-lg w-full max-h-[96vh] overflow-y-auto text-center shadow-2xl card-enter">
+            <h3 class="text-2xl font-black text-amber-400 mb-1" id="modal-round-title">ラウンド 1 結果発表</h3>
+            <p class="text-xs text-gray-300 mb-4">このラウンドで獲得した具材の得点内訳</p>
+
+            <div id="score-breakdown" class="space-y-2 text-left max-h-60 overflow-y-auto pr-1 mb-6 text-sm">
+                <!-- Score Breakdown dynamic items -->
+            </div>
+
+            <div id="round-player-scores" class="bg-black/50 p-3 rounded-xl border border-red-900/60 mb-6 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <!-- Dynamic player scores -->
+            </div>
+
+            <button id="next-round-btn" class="w-full bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 font-black py-3 rounded-xl text-lg text-white shadow-lg transition">
+                次のラウンドへ
+            </button>
+        </div>
+    </div>
+
+    <!-- GAME OVER / FINAL SCORE MODAL -->
+    <div id="gameover-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center overflow-hidden p-2 md:p-4">
+        <div class="result-food-backdrop" aria-hidden="true"></div>
+        <div class="result-light-burst" aria-hidden="true"></div>
+        <div id="result-confetti" class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true"></div>
+        <div class="final-result-card bg-gradient-to-b from-gray-900 via-red-950 to-black border-2 border-amber-400 rounded-3xl p-3 md:p-5 max-w-xl w-full max-h-[98vh] overflow-y-auto text-center shadow-2xl">
+            <div class="final-result-badge text-5xl mb-1">🏆</div>
+            <h2 class="text-3xl font-black gold-text mb-1">最終結果発表</h2>
+            <p class="text-xs text-amber-200/80 mb-2">全3ラウンドの麻辣湯完成！</p>
+            <div id="winner-announcement" class="winner-announcement text-lg md:text-xl font-black text-amber-300 mb-3">🏆 優勝！</div>
+
+            <!-- Meatball Bonus Details -->
+            <div class="bg-amber-950/40 border border-amber-500/40 p-2 rounded-xl mb-3 text-left text-xs md:text-sm">
+                <div class="font-bold text-amber-300 mb-1 flex items-center">
+                    <span class="text-lg mr-1.5">🍡</span> 最終ボーナス：サーカス団子の精算
+                </div>
+                <div id="meatball-summary" class="text-gray-300 space-y-1">
+                    <!-- Dynamic Meatball scores -->
+                </div>
+            </div>
+
+            <!-- Final Leaderboard -->
+            <div id="final-leaderboard" class="space-y-1.5 mb-3">
+                <!-- Dynamic final scores -->
+            </div>
+
+            <button id="restart-btn" class="w-full bg-gradient-to-r from-amber-500 via-red-600 to-amber-500 hover:opacity-90 font-black py-3.5 rounded-xl text-lg text-white shadow-xl transition transform hover:scale-[1.02]">
+                もう一度遊ぶ 🍲
+            </button>
+        </div>
+    </div>
+
+    <!-- RULES MODAL -->
+    <div id="rules-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-red-800 rounded-2xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto relative">
+            <button id="close-rules-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-xl font-bold text-amber-400 mb-4 flex items-center">
+                <i class="fa-solid fa-book-open mr-2"></i> 麻辣湯カード得点表
+            </h3>
+
+            <div class="space-y-3 text-xs md:text-sm text-gray-200">
+                <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-900/50">
+                    <span class="font-bold text-amber-300">🍜 板春雨 (単体点)</span>
+                    <p class="text-gray-300 mt-0.5">1枚=1pt / 2枚=3pt / 3枚以上=1枚につき6pt</p>
+                </div>
+                <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-900/50">
+                    <span class="font-bold text-amber-300">🍄 きくらげ (ペアコンボ)</span>
+                    <p class="text-gray-300 mt-0.5">1枚=0pt / 2枚揃うと<span class="text-amber-400 font-bold">5pt</span> (4枚なら10pt)</p>
+                </div>
+                <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-900/50">
+                    <span class="font-bold text-amber-300">🥩 牛・ラム肉 (トリオコンボ)</span>
+                    <p class="text-gray-300 mt-0.5">1〜2枚=0pt / 3枚揃うと<span class="text-amber-400 font-bold">10pt</span>！</p>
+                </div>
+                <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-900/50">
+                    <span class="font-bold text-amber-300">🥖 油条 (累積点)</span>
+                    <p class="text-gray-300 mt-0.5">1枚=1pt / 2枚=3pt / 3枚=6pt / 4枚=10pt... (集めるほど加速)</p>
+                </div>
+                <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-900/50">
+                    <span class="font-bold text-amber-300">🧂 花椒スパイス (追加点)</span>
+                    <p class="text-gray-300 mt-0.5">肉または板春雨1枚につき、スパイス1枚で<span class="text-amber-400 font-bold">6pt追加</span>。</p>
+                </div>
+                <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-900/50">
+                    <span class="font-bold text-amber-300">🥬 チンゲン菜 (最多勝負)</span>
+                    <p class="text-gray-300 mt-0.5">ラウンド終了時、一番多く持っている人に<span class="text-amber-400 font-bold">6pt</span>、2位に<span class="text-amber-400 font-bold">3pt</span>。</p>
+                </div>
+                <div class="bg-red-950/40 p-2.5 rounded-lg border border-red-900/50">
+                    <span class="font-bold text-amber-300">🥚 うずら卵</span>
+                    <p class="text-gray-300 mt-0.5">場に出しておくと、次の手番で手札から2枚選べます。2枚選ぶと卵は手札に戻ります。</p>
+                </div>
+                <div class="bg-red-950/40 p-2.5 rounded-lg border border-amber-500/50">
+                    <span class="font-bold text-amber-400">🍡 サーカス団子 (全ラウンド通算デザート)</span>
+                    <p class="text-gray-300 mt-0.5">毎ラウンド自分の手元に残る。全3ラウンド終了時、最多獲得者は<span class="text-amber-400 font-bold">+6pt</span>、最下位は<span class="text-red-400 font-bold">-6pt</span>！</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="bgm" src="bgm/全力疾走コネクト.mp3" loop preload="auto"></audio>
+
+    <!-- JAVASCRIPT GAME LOGIC -->
+    <script>
+        // --- GAME DATA DEFINITIONS ---
+        const CARDS_DATA = [
+            { id: 'bunmoja', name: '板春雨', icon: '🍜', soupImage: 'png/板春雨.png', type: 'noodle', color: 'bg-amber-900/80 border-amber-600', desc: '1=1pt, 2=3pt, 3+=6pt/枚' },
+            { id: 'kikurage', name: 'きくらげ', icon: '🍄', soupImage: 'png/きくらげ.png', type: 'vege', color: 'bg-stone-900/80 border-stone-600', desc: '2枚揃うと5pt' },
+            { id: 'meat', name: '牛・ラム肉', icon: '🥩', soupImage: 'png/牛・ラム肉.png', type: 'meat', color: 'bg-red-950/80 border-red-600', desc: '3枚揃うと10pt' },
+            { id: 'youtiao', name: '油条', icon: '🥖', soupImage: 'png/油条.png', type: 'side', color: 'bg-yellow-950/80 border-yellow-600', desc: '集めるほど高得点' },
+            { id: 'spice', name: '花椒スパイス', icon: '🧂', soupImage: 'png/花椒スパイス.png', type: 'spice', color: 'bg-red-900/90 border-red-500', desc: '肉・板春雨に1枚につき+6pt' },
+            { id: 'pakchoi', name: 'チンゲン菜', icon: '🥬', soupImage: 'png/チンゲン菜.png', type: 'green', color: 'bg-emerald-950/80 border-emerald-600', desc: '最多勝負(1位6pt,2位3pt)' },
+            { id: 'tofu', name: 'うずら卵', icon: '🥚', soupImage: 'png/うずら卵.png', type: 'utility', color: 'bg-orange-950/80 border-orange-600', desc: '次回2枚選択可能' },
+            { id: 'meatball', name: 'サーカス団子', icon: '🍡', soupImage: 'png/サーカス団子.png', type: 'dessert', color: 'bg-pink-950/80 border-pink-500', desc: '通算計算: 最多+6pt/最少-6pt' }
+        ];
+
+        // Card Deck Ratios
+        const DECK_COMPOSITION = {
+            bunmoja: 20,
+            kikurage: 16,
+            meat: 16,
+            youtiao: 16,
+            spice: 10,
+            pakchoi: 16,
+            tofu: 10,
+            meatball: 16
+        };
+
+        // --- STATE VARIABLES ---
+        let deck = [];
+        let currentRound = 1;
+        let selectedCards = []; // Cards player currently selected to play this turn
+        let chopsticksActive = false;
+        const bgm = document.getElementById('bgm');
+        let audioContext;
+
+        // Players state
+        let players = [
+            { id: 'player', name: 'あなた', hand: [], bowl: [], persistent: [], totalScore: 0, roundScore: 0, isHuman: true },
+            { id: 'cpu1', name: '星野さゆ', hand: [], bowl: [], persistent: [], totalScore: 0, roundScore: 0, isHuman: false },
+            { id: 'cpu2', name: 'さたん', hand: [], bowl: [], persistent: [], totalScore: 0, roundScore: 0, isHuman: false },
+            { id: 'cpu3', name: '兎二角あう', hand: [], bowl: [], persistent: [], totalScore: 0, roundScore: 0, isHuman: false },
+            { id: 'cpu4', name: '茉白もも', hand: [], bowl: [], persistent: [], totalScore: 0, roundScore: 0, isHuman: false }
+        ];
+
+        // --- GAME INITIALIZATION ---
+        function initGame() {
+            currentRound = 1;
+            players.forEach(p => {
+                p.totalScore = 0;
+                p.roundScore = 0;
+                p.bowl = [];
+                p.persistent = [];
+                p.hand = [];
+            });
+            buildDeck();
+            startRound();
+            updateUI();
+        }
+
+        function buildDeck() {
+            deck = [];
+            Object.keys(DECK_COMPOSITION).forEach(cardId => {
+                const count = DECK_COMPOSITION[cardId];
+                const baseCard = CARDS_DATA.find(c => c.id === cardId);
+                for (let i = 0; i < count; i++) {
+                    deck.push({ ...baseCard, uid: Math.random().toString(36).substr(2, 9) });
+                }
+            });
+            // Shuffle
+            deck.sort(() => Math.random() - 0.5);
+        }
+
+        function startRound() {
+            // Reset round bowls for players (keep persistent dessert/meatball cards)
+            players.forEach(p => {
+                p.bowl = [];
+                p.roundScore = 0;
+            });
+
+            // Deal 8 cards to each player
+            for (let i = 0; i < 8; i++) {
+                players.forEach(p => {
+                    if (deck.length > 0) {
+                        p.hand.push(deck.pop());
+                    }
+                });
+            }
+
+            selectedCards = [];
+            chopsticksActive = false;
+            updateUI();
+        }
+
+        // --- TURN LOGIC & AI ---
+        function selectCard(card) {
+            if (bgm.paused) startBgm();
+            const player = players[0];
+            // Check chopsticks state
+            const hasChopsticksInBowl = player.bowl.some(c => c.id === 'tofu');
+            const maxSelectable = (hasChopsticksInBowl && player.hand.length >= 2) ? 2 : 1;
+
+            const index = selectedCards.findIndex(c => c.uid === card.uid);
+            if (index > -1) {
+                selectedCards.splice(index, 1);
+            } else {
+                if (selectedCards.length < maxSelectable) {
+                    selectedCards.push(card);
+                } else if (maxSelectable === 1) {
+                    selectedCards = [card];
+                }
+            }
+
+            chopsticksActive = (selectedCards.length === 2);
+            updateHandUI();
+        }
+
+        function confirmTurn() {
+            if (selectedCards.length === 0) return;
+            playSound();
+
+            const player = players[0];
+
+            // If using chopsticks utility to return 1 chopsticks back to hand
+            if (selectedCards.length === 2) {
+                const tofuIndex = player.bowl.findIndex(c => c.id === 'tofu');
+                if (tofuIndex > -1) {
+                    const returnedTofu = player.bowl.splice(tofuIndex, 1)[0];
+                    player.hand.push(returnedTofu); // Put back to hand to pass
+                }
+            }
+
+            // Move selected cards from player hand to bowl
+            selectedCards.forEach(card => {
+                const handIdx = player.hand.findIndex(c => c.uid === card.uid);
+                if (handIdx > -1) {
+                    const played = player.hand.splice(handIdx, 1)[0];
+                    if (played.id === 'meatball') {
+                        player.persistent.push(played);
+                    } else {
+                        player.bowl.push(played);
+                    }
+                }
+            });
+
+            // CPU Turn decisions
+            for (let i = 1; i < players.length; i++) {
+                const cpu = players[i];
+                const useChopsticks = cpu.bowl.some(card => card.id === 'tofu') && cpu.hand.length >= 2;
+                const cardsToChoose = useChopsticks ? 2 : 1;
+                for (let pick = 0; pick < cardsToChoose; pick++) {
+                    const chosenIndex = cpuChooseCardIndex(cpu);
+                    const chosen = cpu.hand.splice(chosenIndex, 1)[0];
+                    addCardToBowl(cpu, chosen);
+                }
+                if (useChopsticks) {
+                    const tofuIndex = cpu.bowl.findIndex(card => card.id === 'tofu');
+                    if (tofuIndex !== -1) {
+                        cpu.hand.push(cpu.bowl.splice(tofuIndex, 1)[0]);
+                    }
+                }
+            }
+
+            // Rotate hands (Drafting)
+            const hands = players.map(p => p.hand);
+            players.forEach((player, index) => {
+                player.hand = hands[(index + players.length - 1) % players.length];
+            });
+
+            selectedCards = [];
+            chopsticksActive = false;
+
+            // Check if round finished
+            if (players[0].hand.length === 0) {
+                updateUI();
+                window.setTimeout(endRound, 450);
+            } else {
+                updateUI();
+            }
+        }
+
+        function addCardToBowl(player, card) {
+            if (card.id === 'meatball') {
+                player.persistent.push(card);
+            } else {
+                player.bowl.push(card);
+            }
+        }
+
+        function cpuChooseCardIndex(cpu) {
+            let bestIndex = 0;
+            let bestScore = -Infinity;
+
+            cpu.hand.forEach((card, index) => {
+                const score = getCpuCardValue(cpu, card) + Math.random() * 0.15;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestIndex = index;
+                }
+            });
+
+            return bestIndex;
+        }
+
+        function getCpuCardValue(cpu, card) {
+            const count = id => cpu.bowl.filter(item => item.id === id).length;
+            const inHand = id => cpu.hand.filter(item => item.id === id).length;
+            const turnsLeft = cpu.hand.length;
+
+            switch (card.id) {
+                case 'bunmoja': {
+                    const current = count('bunmoja');
+                    if (current === 0) return 1.6 + Math.min(inHand('bunmoja'), 2) * 0.7;
+                    if (current === 1) return 2.8 + Math.min(inHand('bunmoja'), 2) * 1.1;
+                    return 6 + (current === 2 ? 10 : 0);
+                }
+                case 'kikurage':
+                    return count('kikurage') % 2 === 1
+                        ? 5.2
+                        : 1.7 + Math.min(inHand('kikurage'), 2) * 0.7;
+                case 'meat': {
+                    const current = count('meat');
+                    if (current % 3 === 2) return 10.5;
+                    return (current === 0 ? 2.1 : 1.6) + Math.min(inHand('meat'), 2) * 0.8;
+                }
+                case 'youtiao':
+                    return count('youtiao') + 1;
+                case 'spice': {
+                    const targets = count('meat') + count('bunmoja');
+                    const spices = count('spice');
+                    if (spices < targets) return 6.2;
+                    if (inHand('meat') + inHand('bunmoja') > 0) return 4.2;
+                    return turnsLeft > 2 ? 1.8 : 0.8;
+                }
+                case 'pakchoi': {
+                    const ownCount = count('pakchoi');
+                    const highestOpponent = Math.max(...players
+                        .filter(player => player !== cpu)
+                        .map(player => player.bowl.filter(item => item.id === 'pakchoi').length));
+                    if (ownCount >= highestOpponent) return ownCount > highestOpponent ? 5.6 : 4.4;
+                    if (ownCount + 1 >= highestOpponent) return 3.6;
+                    return turnsLeft > 3 ? 2.1 : 1.1;
+                }
+                case 'tofu':
+                    return cpu.bowl.some(item => item.id === 'tofu') ? 0.2 : 4.8;
+                case 'meatball': {
+                    const ownCount = cpu.persistent.filter(item => item.id === 'meatball').length;
+                    const highestOpponent = Math.max(...players
+                        .filter(player => player !== cpu)
+                        .map(player => player.persistent.filter(item => item.id === 'meatball').length));
+                    return ownCount < highestOpponent ? 5.4 : 3.1;
+                }
+                default:
+                    return 0;
+            }
+        }
+
+        // --- SCORE CALCULATIONS ---
+        function calculateRoundScores() {
+            // First calculate individual bowl scores
+            const breakdowns = players.map(p => {
+                let score = 0;
+                let details = [];
+
+                // 1. Bunmoja (Noodles)
+                const bunmojaCount = p.bowl.filter(c => c.id === 'bunmoja').length;
+                if (bunmojaCount > 0) {
+                    let pts = 0;
+                    if (bunmojaCount === 1) pts = 1;
+                    else if (bunmojaCount === 2) pts = 3;
+                    else pts = bunmojaCount * 6;
+                    score += pts;
+                    details.push({ name: '板春雨', count: bunmojaCount, pts: pts });
+                }
+
+                // 2. Kikurage (Wood Ear Mushroom)
+                const kikurageCount = p.bowl.filter(c => c.id === 'kikurage').length;
+                if (kikurageCount > 0) {
+                    const pairs = Math.floor(kikurageCount / 2);
+                    const pts = pairs * 5;
+                    score += pts;
+                    details.push({ name: 'きくらげ', count: kikurageCount, pts: pts });
+                }
+
+                // 3. Meat
+                const meatCount = p.bowl.filter(c => c.id === 'meat').length;
+                if (meatCount > 0) {
+                    const trios = Math.floor(meatCount / 3);
+                    const pts = trios * 10;
+                    score += pts;
+                    details.push({ name: '牛・ラム肉', count: meatCount, pts: pts });
+                }
+
+                // 4. Youtiao (Fried Dough)
+                const youtiaoCount = p.bowl.filter(c => c.id === 'youtiao').length;
+                if (youtiaoCount > 0) {
+                    // 1=1, 2=3, 3=6, 4=10, ... Formula: n*(n+1)/2
+                    const pts = (youtiaoCount * (youtiaoCount + 1)) / 2;
+                    score += pts;
+                    details.push({ name: '油条', count: youtiaoCount, pts: pts });
+                }
+
+                // 5. Spice bonus (six extra points for each matching meat or noodle)
+                const spiceCount = p.bowl.filter(c => c.id === 'spice').length;
+                if (spiceCount > 0) {
+                    let bonusPts = 0;
+                    let targetCards = p.bowl.filter(c => c.id === 'meat' || c.id === 'bunmoja');
+                    let applyCount = Math.min(spiceCount, targetCards.length);
+                    bonusPts = applyCount * 6;
+                    score += bonusPts;
+                    details.push({ name: '花椒スパイス(追加点)', count: spiceCount, pts: bonusPts });
+                }
+
+                return { player: p, score: score, details: details };
+            });
+
+            // 6. Pakchoi (Cilantro/Bok Choy - Most Collected Bonus per round)
+            const pakchoiCounts = players.map(p => ({
+                player: p,
+                count: p.bowl.filter(c => c.id === 'pakchoi').length
+            })).sort((a, b) => b.count - a.count);
+
+            if (pakchoiCounts[0].count > 0) {
+                const first = breakdowns.find(b => b.player.id === pakchoiCounts[0].player.id);
+                first.score += 6;
+                first.details.push({ name: 'チンゲン菜 (1位ボーナス)', count: pakchoiCounts[0].count, pts: 6 });
+
+                if (pakchoiCounts[1].count > 0 && pakchoiCounts[1].count < pakchoiCounts[0].count) {
+                    const second = breakdowns.find(b => b.player.id === pakchoiCounts[1].player.id);
+                    second.score += 3;
+                    second.details.push({ name: 'チンゲン菜 (2位ボーナス)', count: pakchoiCounts[1].count, pts: 3 });
+                }
+            }
+
+            // Assign round scores
+            breakdowns.forEach(b => {
+                b.player.roundScore = b.score;
+                b.player.totalScore += b.score;
+            });
+
+            return breakdowns;
+        }
+
+        function endRound() {
+            const breakdowns = calculateRoundScores();
+            showRoundModal(breakdowns);
+        }
+
+        function calculateFinalMeatballBonus() {
+            const counts = players.map(p => ({
+                player: p,
+                count: p.persistent.filter(c => c.id === 'meatball').length
+            })).sort((a, b) => b.count - a.count);
+
+            let results = [];
+
+            // Highest gets +6, Lowest gets -6
+            counts.forEach((entry, idx) => {
+                let bonus = 0;
+                if (idx === 0 && entry.count > 0) bonus = 6;
+                else if (idx === counts.length - 1) bonus = -6;
+
+                entry.player.totalScore += bonus;
+                results.push({
+                    name: entry.player.name,
+                    count: entry.count,
+                    bonus: bonus
+                });
+            });
+
+            return results;
+        }
+
+        // --- UI RENDER FUNCTIONS ---
+        function updateUI() {
+            // Header stats
+            document.getElementById('round-display').innerText = `${currentRound} / 3`;
+            document.getElementById('total-score-display').innerText = `${players[0].totalScore} pt`;
+            players.slice(1).forEach(player => {
+                document.getElementById(`${player.id}-score`).innerText = `${player.totalScore} pt`;
+            });
+
+            // Render Player Hand
+            updateHandUI();
+
+            // Render Bowls
+            renderBowl('player-bowl', players[0]);
+            players.slice(1).forEach(player => {
+                renderBowl(`${player.id}-bowl`, player, true);
+            });
+        }
+
+        function updateHandUI() {
+            const handContainer = document.getElementById('player-hand');
+            handContainer.innerHTML = '';
+
+            const player = players[0];
+            player.hand.forEach(card => {
+                const isSelected = selectedCards.some(c => c.uid === card.uid);
+                const cardEl = document.createElement('div');
+                cardEl.className = `hand-card flex-shrink-0 rounded-xl border-2 ${card.color} flex flex-col gap-1 cursor-pointer transition transform hover:-translate-y-1 ${isSelected ? 'ring-4 ring-amber-400 scale-105' : 'opacity-95'}`;
+                cardEl.setAttribute('aria-label', `${card.name}: ${card.desc}`);
+                
+                cardEl.onclick = () => selectCard(card);
+
+                cardEl.innerHTML = `
+                    <div class="flex w-full items-start justify-between">
+                        <span class="hand-card-icon" aria-hidden="true">${card.icon}</span>
+                        ${isSelected ? '<span class="text-amber-300 drop-shadow"><i class="fa-solid fa-circle-check text-base"></i></span>' : ''}
+                    </div>
+                    <div class="hand-card-copy w-full text-left">
+                        <div class="hand-card-name font-bold text-[11px] text-white leading-tight">${card.name}</div>
+                        <div class="card-description mt-0.5 text-[9px] text-gray-200 leading-tight opacity-90">${card.desc}</div>
+                    </div>
+                `;
+                handContainer.appendChild(cardEl);
+            });
+
+            // Confirm button state
+            const confirmBtn = document.getElementById('confirm-btn');
+            if (selectedCards.length > 0) {
+                confirmBtn.disabled = false;
+                confirmBtn.className = "bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-400 hover:to-red-500 text-white font-black px-5 py-1.5 rounded-xl text-sm transition shadow-lg cursor-pointer transform hover:scale-105";
+            } else {
+                confirmBtn.disabled = true;
+                confirmBtn.className = "bg-gray-700 text-gray-400 cursor-not-allowed font-bold px-5 py-1.5 rounded-xl text-sm transition shadow-md";
+            }
+
+            // Chopsticks indicator
+            const badge = document.getElementById('chopsticks-badge');
+            const hasChopsticksInBowl = player.bowl.some(c => c.id === 'tofu');
+            if (hasChopsticksInBowl) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderBowl(containerId, player, isCompact = false) {
+            const bowl = document.getElementById(containerId);
+            const isPlayerBowl = containerId === 'player-bowl';
+            const container = isPlayerBowl ? document.getElementById('soup-ingredients') : bowl;
+            const soupPositions = [
+                [25, 28], [50, 22], [75, 28], [18, 50],
+                [39, 46], [61, 46], [82, 50], [25, 72],
+                [50, 78], [75, 72], [38, 27], [62, 27],
+                [30, 55], [70, 55], [39, 72], [61, 72]
+            ];
+            const soupImageSizes = {
+                bunmoja: [136, 92],
+                kikurage: [128, 96],
+                meat: [128, 96],
+                youtiao: [136, 88],
+                spice: [100, 80],
+                pakchoi: [128, 100],
+                tofu: [68, 84],
+                meatball: [92, 96]
+            };
+            const existingIngredients = isPlayerBowl
+                ? new Map(Array.from(container.children, element => [element.dataset.uid, element]))
+                : null;
+            if (!isPlayerBowl) container.innerHTML = '';
+
+            const allItems = [...player.bowl, ...player.persistent];
+            if (isPlayerBowl) {
+                document.getElementById('empty-bowl-msg').classList.toggle('hidden', allItems.length > 0);
+                bowl.setAttribute('aria-label', allItems.length > 0
+                    ? `麻辣湯の中身: ${allItems.map(card => card.name).join('、')}`
+                    : '空の麻辣湯');
+                const ingredientIcons = document.getElementById('player-ingredient-icons');
+                ingredientIcons.innerHTML = '';
+                allItems.forEach(card => {
+                    const icon = document.createElement('span');
+                    icon.className = 'player-ingredient-icon grid h-7 w-7 shrink-0 place-items-center rounded-full border border-amber-200/30 bg-black/40 shadow';
+                    icon.textContent = card.icon;
+                    icon.setAttribute('aria-label', card.name);
+                    icon.title = card.name;
+                    ingredientIcons.appendChild(icon);
+                });
+                if (allItems.length === 0) {
+                    ingredientIcons.innerHTML = '<span class="text-[10px] text-gray-500">まだありません</span>';
+                }
+            }
+
+            if (allItems.length === 0) {
+                if (!isCompact && !isPlayerBowl) {
+                    container.innerHTML = `<p class="text-sm text-gray-500 w-full text-center py-6">まだ具材が入っていません</p>`;
+                }
+                if (isPlayerBowl) existingIngredients.forEach(element => element.remove());
+                return;
+            }
+
+            allItems.forEach((card, index) => {
+                const el = isPlayerBowl ? existingIngredients.get(card.uid) || document.createElement('div') : document.createElement('div');
+                if (isPlayerBowl) {
+                    el.className = 'soup-ingredient';
+                    el.setAttribute('aria-label', card.name);
+                    el.title = card.name;
+                    el.dataset.uid = card.uid;
+                    if (el.dataset.image !== card.soupImage) {
+                        const image = document.createElement('img');
+                        image.src = card.soupImage;
+                        image.alt = '';
+                        image.draggable = false;
+                        image.setAttribute('aria-hidden', 'true');
+                        el.replaceChildren(image);
+                        el.dataset.image = card.soupImage;
+                    }
+                    const [x, y] = soupPositions[index % soupPositions.length];
+                    const [width, height] = soupImageSizes[card.id];
+                    el.style.setProperty('--x', `${x}%`);
+                    el.style.setProperty('--y', `${y}%`);
+                    el.style.setProperty('--item-width', `${width}px`);
+                    el.style.setProperty('--item-height', `${height}px`);
+                    if (!el.parentElement) container.appendChild(el);
+                    existingIngredients.delete(card.uid);
+                } else if (isCompact) {
+                    el.className = 'bowl-item bg-black/60 border border-red-900 rounded-full w-7 h-7 flex items-center justify-center';
+                    el.innerHTML = `<span class="text-base" aria-hidden="true">${card.icon}</span>`;
+                    el.setAttribute('aria-label', card.name);
+                    el.title = card.name;
+                } else {
+                    el.className = `bowl-item ${card.color} border border-amber-500/50 rounded-xl px-2.5 py-1.5 text-xs flex items-center space-x-1.5 shadow-md`;
+                    el.innerHTML = `<span class="text-lg">${card.icon}</span> <span class="font-bold text-gray-100">${card.name}</span>`;
+                }
+                if (!isPlayerBowl) container.appendChild(el);
+            });
+
+            if (isPlayerBowl) {
+                existingIngredients.forEach(element => element.remove());
+            }
+        }
+
+        // --- MODAL CONTROLS ---
+        function showRoundModal(breakdowns) {
+            document.getElementById('modal-round-title').innerText = `ラウンド ${currentRound} 結果発表`;
+
+            const p0Break = breakdowns.find(b => b.player.id === 'player');
+            const playerScores = document.getElementById('round-player-scores');
+            playerScores.innerHTML = breakdowns.map(({ player, score }) => `
+                <div class="bg-black/40 rounded-lg px-2 py-1.5">
+                    <div class="text-xs text-gray-400">${player.name}</div>
+                    <div class="text-lg font-bold text-amber-400">+${score} pt</div>
+                </div>
+            `).join('');
+
+            const list = document.getElementById('score-breakdown');
+            list.innerHTML = '';
+
+            if (p0Break.details.length === 0) {
+                list.innerHTML = `<div class="text-gray-400">得点対象の具材がありませんでした</div>`;
+            } else {
+                p0Break.details.forEach(d => {
+                    const row = document.createElement('div');
+                    row.className = "flex justify-between items-center bg-black/40 px-3 py-1.5 rounded-lg border border-red-900/40";
+                    row.innerHTML = `<span class="text-gray-200">${d.name} (${d.count}個)</span> <span class="font-bold text-amber-400">+${d.pts} pt</span>`;
+                    list.appendChild(row);
+                });
+            }
+
+            document.getElementById('round-modal').classList.remove('hidden');
+        }
+
+        function showGameOverModal() {
+            bgm.pause();
+            updateBgmButton();
+            const meatballResults = calculateFinalMeatballBonus();
+
+            const summaryEl = document.getElementById('meatball-summary');
+            summaryEl.innerHTML = meatballResults.map(r => `
+                <div class="flex justify-between">
+                    <span>${r.name}: ${r.count}個</span>
+                    <span class="${r.bonus >= 0 ? 'text-amber-400 font-bold' : 'text-red-400 font-bold'}">${r.bonus >= 0 ? '+' : ''}${r.bonus} pt</span>
+                </div>
+            `).join('');
+
+            // Sort leaderboard
+            const sorted = [...players].sort((a, b) => b.totalScore - a.totalScore);
+            document.getElementById('winner-announcement').textContent = `🏆 優勝：${sorted[0].name}！`;
+            const boardEl = document.getElementById('final-leaderboard');
+            boardEl.innerHTML = sorted.map((p, rank) => {
+                const ranks = ['🥇 1位', '🥈 2位', '🥉 3位'];
+                const isPlayer = p.id === 'player';
+                return `
+                    <div class="final-score-row flex justify-between items-center ${rank === 0 ? 'bg-amber-950/70 border-amber-400' : isPlayer ? 'bg-amber-950/50 border-amber-700' : 'bg-black/50 border-gray-800'} border px-3 py-1.5 rounded-xl" style="--rank:${rank}">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-base font-bold">${ranks[rank] || `${rank + 1}位`}</span>
+                            <span class="font-bold text-gray-100">${p.name}</span>
+                        </div>
+                        <span class="text-xl font-black text-amber-400"><span class="final-score-value" data-final-score="${p.totalScore}">0</span> pt</span>
+                    </div>
+                `;
+            }).join('');
+
+            const confetti = document.getElementById('result-confetti');
+            const colors = ['#ffd166', '#ef476f', '#06d6a0', '#f7f3e3', '#4cc9f0'];
+            confetti.innerHTML = Array.from({ length: 84 }, (_, index) => {
+                const size = 5 + Math.random() * 9;
+                const delay = Math.random() * 1.6;
+                const duration = 2.8 + Math.random() * 2.2;
+                const x = Math.random() * 100;
+                const drift = `${Math.round(Math.random() * 180 - 90)}px`;
+                const color = colors[index % colors.length];
+                return `<span class="confetti-piece" style="--x:${x}%;--size:${size}px;--delay:${delay}s;--duration:${duration}s;--drift:${drift};--color:${color}"></span>`;
+            }).join('');
+
+            document.getElementById('gameover-modal').classList.remove('hidden');
+            document.getElementById('gameover-modal').classList.add('final-result-modal');
+            animateFinalScores();
+            playFinalResultSound();
+        }
+
+        function animateFinalScores() {
+            const scoreElements = Array.from(document.querySelectorAll('.final-score-value'));
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                scoreElements.forEach(element => {
+                    element.textContent = element.dataset.finalScore;
+                });
+                return;
+            }
+
+            scoreElements.forEach((element, index) => {
+                const targetScore = Number(element.dataset.finalScore);
+                const startTime = performance.now() + index * 120;
+                const duration = 1100;
+
+                function updateScore(now) {
+                    const progress = Math.min(1, Math.max(0, (now - startTime) / duration));
+                    const easedProgress = 1 - Math.pow(1 - progress, 3);
+                    element.textContent = String(Math.round(targetScore * easedProgress));
+                    if (progress < 1) requestAnimationFrame(updateScore);
+                }
+
+                requestAnimationFrame(updateScore);
+            });
+        }
+
+        // --- EVENT LISTENERS ---
+        document.getElementById('confirm-btn').addEventListener('click', confirmTurn);
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            document.getElementById('start-modal').classList.add('hidden');
+            startBgm();
+        });
+
+        document.getElementById('bgm-btn').addEventListener('click', () => {
+            if (bgm.paused) {
+                startBgm();
+            } else {
+                bgm.pause();
+                updateBgmButton();
+            }
+        });
+
+        function updateBgmButton(errorMessage = '') {
+            const label = document.getElementById('bgm-label');
+            const button = document.getElementById('bgm-btn');
+            label.textContent = bgm.paused ? 'BGM OFF' : 'BGM ON';
+            button.setAttribute('aria-label', bgm.paused ? 'BGMを再生' : 'BGMを停止');
+            button.title = errorMessage || (bgm.paused ? 'BGMを再生' : 'BGMを停止');
+        }
+
+        function startBgm() {
+            bgm.volume = 0.3;
+            bgm.play().then(() => updateBgmButton()).catch(error => {
+                updateBgmButton(`BGMを再生できません: ${error.message}`);
+            });
+        }
+
+        function playSound() {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return;
+
+            if (!audioContext) {
+                audioContext = new AudioContextClass();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => playSound()).catch(error => {
+                    document.getElementById('bgm-btn').title = `効果音を再生できません: ${error.message}`;
+                });
+                return;
+            }
+
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            const now = audioContext.currentTime;
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(660, now);
+            oscillator.frequency.exponentialRampToValueAtTime(440, now + 0.12);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+            oscillator.connect(gain);
+            gain.connect(audioContext.destination);
+            oscillator.start(now);
+            oscillator.stop(now + 0.16);
+        }
+
+        function playFinalResultSound() {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return;
+
+            if (!audioContext) {
+                audioContext = new AudioContextClass();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => playFinalResultSound()).catch(error => {
+                    document.getElementById('bgm-btn').title = `結果発表の効果音を再生できません: ${error.message}`;
+                });
+                return;
+            }
+
+            const notes = [
+                { frequency: 392, offset: 0, duration: 0.4, volume: 0.13 },
+                { frequency: 523.25, offset: 0.13, duration: 0.42, volume: 0.15 },
+                { frequency: 659.25, offset: 0.3, duration: 0.45, volume: 0.16 },
+                { frequency: 783.99, offset: 0.49, duration: 0.5, volume: 0.17 },
+                { frequency: 1046.5, offset: 0.72, duration: 0.62, volume: 0.18 },
+                { frequency: 1318.51, offset: 0.98, duration: 0.66, volume: 0.18 },
+                { frequency: 1567.98, offset: 1.24, duration: 0.75, volume: 0.19 },
+                { frequency: 1046.5, offset: 1.7, duration: 1.15, volume: 0.13 },
+                { frequency: 1318.51, offset: 1.72, duration: 1.1, volume: 0.12 },
+                { frequency: 1567.98, offset: 1.74, duration: 1.05, volume: 0.11 }
+            ];
+            const now = audioContext.currentTime;
+            notes.forEach(({ frequency, offset, duration, volume }) => {
+                const oscillator = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                const start = now + offset;
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(frequency, start);
+                gain.gain.setValueAtTime(0.001, start);
+                gain.gain.linearRampToValueAtTime(volume, start + 0.025);
+                gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+                oscillator.connect(gain);
+                gain.connect(audioContext.destination);
+                oscillator.start(start);
+                oscillator.stop(start + duration + 0.01);
+            });
+
+            const bass = audioContext.createOscillator();
+            const bassGain = audioContext.createGain();
+            bass.type = 'sine';
+            bass.frequency.setValueAtTime(130.81, now);
+            bass.frequency.exponentialRampToValueAtTime(65.41, now + 0.65);
+            bassGain.gain.setValueAtTime(0.2, now);
+            bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+            bass.connect(bassGain);
+            bassGain.connect(audioContext.destination);
+            bass.start(now);
+            bass.stop(now + 0.72);
+        }
+
+        document.getElementById('next-round-btn').addEventListener('click', () => {
+            document.getElementById('round-modal').classList.add('hidden');
+            if (currentRound < 3) {
+                currentRound++;
+                startRound();
+            } else {
+                showGameOverModal();
+            }
+        });
+
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            document.getElementById('gameover-modal').classList.add('hidden');
+            document.getElementById('gameover-modal').classList.remove('final-result-modal');
+            initGame();
+            startBgm();
+        });
+
+        // Rules modal toggles
+        document.getElementById('rules-btn').addEventListener('click', () => {
+            document.getElementById('rules-modal').classList.remove('hidden');
+        });
+        document.getElementById('close-rules-btn').addEventListener('click', () => {
+            document.getElementById('rules-modal').classList.add('hidden');
+        });
+
+        // Initialize on load
+        window.onload = () => {
+            initGame();
+        };
+    </script>
+</body>
+</html>
