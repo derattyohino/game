@@ -1,0 +1,2032 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#110d1c">
+  <title>IDOL SURVIVORS</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #fff8fc;
+      --muted: #b7a9bd;
+      --pink: #ff65b5;
+      --purple: #a78bfa;
+      --panel: rgba(25, 17, 38, .92);
+      --line: rgba(255, 255, 255, .13);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      overflow: hidden;
+      color: var(--ink);
+      background: #100d18;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      user-select: none;
+    }
+
+    button { font: inherit; }
+
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 45%, rgba(84, 37, 95, .18), transparent 55%),
+        #100d18;
+    }
+
+    canvas { display: block; width: 100%; height: 100%; }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(10, 8, 16, .64);
+      backdrop-filter: blur(7px);
+    }
+
+    .hidden { display: none !important; }
+
+    .menu-card {
+      width: min(940px, 100%);
+      max-height: 94dvh;
+      overflow: auto;
+      padding: clamp(22px, 5vw, 48px);
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: linear-gradient(145deg, rgba(38, 24, 54, .97), rgba(19, 16, 29, .98));
+      box-shadow: 0 24px 90px #07050caa;
+      text-align: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: #ff99ce;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .24em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(40px, 8vw, 78px);
+      line-height: .96;
+      letter-spacing: -.06em;
+      text-shadow: 0 5px 35px #ff4cab55;
+    }
+
+    h1 span { color: var(--pink); }
+
+    .tagline {
+      margin: 16px 0 28px;
+      color: #eadce9;
+      font-size: clamp(14px, 2vw, 18px);
+    }
+
+    .character-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 24px 0;
+      text-align: left;
+    }
+
+    .character-card {
+      min-height: 174px;
+      padding: 16px 14px;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, .045);
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .character-card:hover { transform: translateY(-3px); border-color: #ff83c4aa; }
+    .character-card.selected { border-color: var(--pink); background: #ff65b51a; box-shadow: 0 0 0 1px #ff65b566; }
+    .character-card .emoji { display: block; margin-bottom: 8px; font-size: 30px; }
+    .character-card strong { display: block; margin-bottom: 7px; font-size: 17px; }
+    .character-card small { display: block; color: var(--muted); line-height: 1.6; }
+    .section-heading { display: block; margin: 20px 0 10px; text-align: left; }
+    .stage-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-bottom: 15px; text-align: left; }
+    .stage-card { min-height: 90px; padding: 12px; color: var(--ink); border: 1px solid var(--line); border-radius: 13px; background: #ffffff08; cursor: pointer; text-align: left; }
+    .stage-card strong, .stage-card small { display: block; }
+    .stage-card small { margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .stage-card.selected { border-color: var(--pink); background: #ff65b51a; }
+    .stage-card:disabled { opacity: .43; cursor: not-allowed; }
+    .skin-picker { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 34px; margin: 8px 0 18px; color: var(--muted); font-size: 12px; }
+    .skin-choice { padding: 6px 11px; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; background: #ffffff08; cursor: pointer; }
+    .skin-choice.selected { border-color: var(--pink); color: #ffb6d8; }
+    .hub-panel { margin-top: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 15px; background: #09071055; text-align: left; }
+    .hub-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .cheki-balance { color: #ffd879; font-weight: 900; }
+    .hub-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .hub-actions button, .lesson-buy { padding: 8px 12px; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; background: #ffffff0a; cursor: pointer; }
+    .hub-content { margin-top: 12px; }
+    .lesson-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .lesson-buy { display: flex; justify-content: space-between; gap: 8px; align-items: center; text-align: left; }
+    .lesson-buy small { display: block; margin-top: 4px; color: var(--muted); }
+    .lesson-buy:disabled { opacity: .48; cursor: not-allowed; }
+    .collection-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .collection-columns h3 { margin: 2px 0 8px; color: #ffacd4; font-size: 14px; }
+    .collection-columns ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.75; }
+    .save-warning { margin: 10px 0 0; color: #ff9a9e; font-size: 12px; }
+
+    .primary, .secondary {
+      min-height: 50px;
+      padding: 0 28px;
+      border-radius: 999px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .primary {
+      color: #250f20;
+      border: 0;
+      background: linear-gradient(100deg, #ff8ac8, #ffd17e);
+      box-shadow: 0 7px 28px #ff65b544;
+    }
+
+    .primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .secondary { color: var(--ink); border: 1px solid var(--line); background: #ffffff0b; }
+    .controls-note { margin: 19px 0 0; color: var(--muted); font-size: 12px; }
+
+    #hud {
+      position: absolute;
+      z-index: 2;
+      top: max(14px, env(safe-area-inset-top));
+      left: 50%;
+      display: flex;
+      width: min(600px, calc(100% - 112px));
+      flex-direction: column;
+      gap: 8px;
+      transform: translateX(-50%);
+      pointer-events: none;
+      text-shadow: 0 2px 6px #000;
+    }
+
+    .hud-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; font-weight: 900; }
+    .bar { height: 11px; overflow: hidden; border: 1px solid #ffffff45; border-radius: 10px; background: #160f20cc; }
+    .bar > i { display: block; width: 100%; height: 100%; border-radius: inherit; transition: width .12s linear; }
+    #hp-fill { background: linear-gradient(90deg, #ff557e, #ff9a9e); }
+    #xp-fill { background: linear-gradient(90deg, #47e0d1, #9cf6c7); }
+    .hud-bottom { display: flex; justify-content: space-between; color: #f3e8f4; font-size: 12px; font-weight: 800; }
+
+    #pause-button {
+      position: absolute;
+      z-index: 3;
+      top: max(14px, env(safe-area-inset-top));
+      right: max(14px, env(safe-area-inset-right));
+      width: 42px;
+      height: 42px;
+      color: white;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: #20172dcc;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    #audio-toggle {
+      position: absolute;
+      z-index: 3;
+      top: max(14px, env(safe-area-inset-top));
+      right: max(64px, calc(env(safe-area-inset-right) + 56px));
+      width: 42px;
+      height: 42px;
+      color: white;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: #20172dcc;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .modal-card { width: min(760px, 100%); padding: 30px; border: 1px solid var(--line); border-radius: 23px; background: var(--panel); text-align: center; box-shadow: 0 24px 90px #07050caa; }
+    .modal-card h2 { margin: 0 0 8px; font-size: clamp(25px, 5vw, 38px); }
+    .modal-card p { margin: 0 0 22px; color: var(--muted); }
+    #upgrade-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    #upgrade-options.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .upgrade {
+      min-height: 150px;
+      padding: 18px 14px;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #ffffff09;
+      cursor: pointer;
+      text-align: left;
+    }
+    .upgrade:hover { border-color: #ff83c4; background: #ff65b51a; }
+    .upgrade b { display: block; margin: 7px 0; font-size: 17px; }
+    .upgrade small { color: var(--muted); line-height: 1.55; }
+    .upgrade .upgrade-icon { font-size: 24px; }
+    .result-icon { margin-bottom: 8px; font-size: 45px; }
+    .result-stats { margin: 18px 0 26px; color: #ded0e0; line-height: 1.9; }
+    .instructions-card { width: min(680px, 100%); }
+    .instruction-list { display: grid; gap: 10px; margin: 22px 0 26px; text-align: left; }
+    .instruction-list p { margin: 0; padding: 12px 15px; border: 1px solid var(--line); border-radius: 12px; background: #ffffff08; color: #f4e8f4; line-height: 1.6; }
+    .instruction-list strong { color: #ffacd4; }
+    .instruction-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+
+    #result-screen.win {
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 40%, rgba(255, 107, 181, .28), rgba(10, 8, 16, .78) 72%);
+    }
+    #result-screen.win::before {
+      position: absolute;
+      inset: -50%;
+      background: repeating-conic-gradient(from 0deg at 50% 50%, #ffd36d12 0deg 8deg, transparent 8deg 20deg);
+      content: "";
+      animation: stage-rays 18s linear infinite;
+    }
+    #result-screen.win .modal-card {
+      position: relative;
+      z-index: 1;
+      border-color: #ffd77d88;
+      background: linear-gradient(145deg, rgba(65, 34, 69, .97), rgba(29, 19, 39, .98));
+      animation: win-arrive .7s cubic-bezier(.2, .8, .2, 1) both;
+    }
+    #result-screen.win .result-icon { animation: trophy-glow 1.2s ease-in-out infinite alternate; }
+    .celebration { position: absolute; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; }
+    .confetti-piece { position: absolute; top: -20px; border-radius: 2px; animation: confetti-fall 3s ease-in forwards; }
+    @keyframes stage-rays { to { transform: rotate(360deg); } }
+    @keyframes win-arrive { from { opacity: 0; transform: translateY(24px) scale(.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes trophy-glow { from { transform: scale(1) rotate(-8deg); filter: drop-shadow(0 0 8px #ffd36d); } to { transform: scale(1.2) rotate(8deg); filter: drop-shadow(0 0 25px #ff82c5); } }
+    @keyframes confetti-fall { to { transform: translateY(115vh) rotate(760deg); opacity: .8; } }
+
+    #joystick {
+      position: absolute;
+      z-index: 3;
+      bottom: max(28px, env(safe-area-inset-bottom));
+      left: max(24px, env(safe-area-inset-left));
+      display: none;
+      width: 116px;
+      height: 116px;
+      border: 1px solid #ffffff40;
+      border-radius: 50%;
+      background: #241a2c88;
+      touch-action: none;
+    }
+    #stick {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 48px;
+      height: 48px;
+      border: 1px solid #ffffff80;
+      border-radius: 50%;
+      background: #ff83c477;
+      transform: translate(-50%, -50%);
+    }
+
+    @media (pointer: coarse) {
+      #joystick { display: block; }
+      .controls-note { padding-bottom: 4px; }
+    }
+
+    @media (max-width: 700px) {
+      .screen { padding: 12px; }
+      .menu-card { padding: 23px 17px; border-radius: 20px; }
+      .character-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 17px 0; }
+      .character-card { min-height: 130px; padding: 11px; }
+      .character-card .emoji { display: inline-block; margin: 0 6px 4px 0; font-size: 23px; vertical-align: middle; }
+      .character-card strong { display: inline; font-size: 15px; }
+      .character-card small { font-size: 11px; }
+      .stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stage-card { min-height: 75px; padding: 9px; }
+      .lesson-list, .collection-columns { grid-template-columns: 1fr; }
+      #upgrade-options { grid-template-columns: 1fr; }
+      #upgrade-options.four { grid-template-columns: 1fr; }
+      .upgrade { min-height: 0; padding: 13px; }
+      .upgrade .upgrade-icon { float: left; margin-right: 12px; }
+      .modal-card { max-height: 92dvh; overflow: auto; padding: 22px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main id="game">
+    <canvas id="stage" aria-label="IDOL SURVIVORS ゲーム画面"></canvas>
+    <audio id="live-bgm" preload="none" loop>
+      <source src="bgm/ぎゅっとてをつないで.mp3" type="audio/mpeg">
+    </audio>
+
+    <section id="title-screen" class="screen">
+      <div class="menu-card">
+        <p class="eyebrow">THE IDOL ROGUELITE SURVIVAL</p>
+        <h1>IDOL <span>SURVIVORS</span></h1>
+        <p class="tagline">ファンサで厄介ヲタクを浄化して、伝説のライブを成功させよう！</p>
+        <strong>アイドルを選んでね</strong>
+        <div id="character-grid" class="character-grid"></div>
+        <strong class="section-heading">ステージ選択</strong>
+        <div id="stage-grid" class="stage-grid"></div>
+        <div id="skin-picker" class="skin-picker"></div>
+        <div class="hub-panel">
+          <div class="hub-header">
+            <span id="cheki-balance" class="cheki-balance">チェキ券 0</span>
+            <div class="hub-actions">
+              <button id="lessons-toggle" type="button">レッスン</button>
+              <button id="collection-toggle" type="button">図鑑・実績</button>
+            </div>
+          </div>
+          <section id="lessons-panel" class="hub-content hidden">
+            <div id="lesson-list" class="lesson-list"></div>
+          </section>
+          <section id="collection-panel" class="hub-content hidden">
+            <div id="collection-content" class="collection-columns"></div>
+          </section>
+          <p id="save-warning" class="save-warning hidden"></p>
+        </div>
+        <button id="start-button" class="primary">遊び方を確認する</button>
+        <p class="controls-note">移動：WASD / 矢印キー ・ 攻撃：自動 ・ レベルアップ時にファンサを選択</p>
+      </div>
+    </section>
+
+    <section id="instructions-screen" class="screen hidden">
+      <div class="modal-card instructions-card">
+        <p class="eyebrow">HOW TO PLAY</p>
+        <h2>ライブの遊び方</h2>
+        <div class="instruction-list">
+          <p><strong>移動：</strong>WASD / 矢印キー、スマートフォンは画面左下のスティック</p>
+          <p><strong>攻撃：</strong>ファンサは自動で発動。敵を倒してサイリウムを集めよう。</p>
+          <p><strong>レベルアップ：</strong>表示される3つのスキルから1つを選んで強化。</p>
+          <p><strong>差し入れ：</strong>1分ごとに現れるTOを倒して、宝箱を手に入れよう。</p>
+          <p><strong>回復：</strong>会場の機材を壊すと、ケータリングが出ることがあるよ。</p>
+          <p><strong>レッスン：</strong>ライブでもらったチェキ券で、次のライブを強化。</p>
+          <p><strong>クリア条件：</strong>5分間生き残ってボスを倒し、次の会場を解放しよう。</p>
+        </div>
+        <div class="instruction-actions">
+          <button id="back-to-select-button" class="secondary">アイドル選択に戻る</button>
+          <button id="begin-live-button" class="primary">ライブスタート！</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="hud" class="hidden" aria-live="polite">
+      <div id="stage-label" class="eyebrow"></div>
+      <div class="hud-top"><span id="character-name">アイドル</span><span id="timer">00:00 / 05:00</span></div>
+      <div class="bar"><i id="hp-fill"></i></div>
+      <div class="bar"><i id="xp-fill"></i></div>
+      <div class="hud-bottom"><span id="level-label">LV 1</span><span id="enemy-label">浄化 0</span><span id="goal-label">LIVE START!</span></div>
+    </section>
+    <button id="audio-toggle" class="hidden" aria-label="音声をミュート">♫</button>
+    <button id="pause-button" class="hidden" aria-label="一時停止">Ⅱ</button>
+
+    <section id="level-screen" class="screen hidden">
+      <div class="modal-card">
+        <p class="eyebrow">LEVEL UP!</p>
+        <h2>次のファンサを選ぼう</h2>
+        <p>どの力を伸ばす？</p>
+        <div id="upgrade-options"></div>
+      </div>
+    </section>
+
+    <section id="pause-screen" class="screen hidden">
+      <div class="modal-card">
+        <p class="eyebrow">LIVE PAUSED</p>
+        <h2>ライブ一時停止中</h2>
+        <p>深呼吸して、ステージに戻ろう。</p>
+        <button id="resume-button" class="primary">ライブに戻る</button>
+      </div>
+    </section>
+
+    <section id="result-screen" class="screen hidden">
+      <div id="celebration" class="celebration"></div>
+      <div class="modal-card">
+        <div id="result-icon" class="result-icon">✨</div>
+        <p id="result-eyebrow" class="eyebrow">LIVE COMPLETE</p>
+        <h2 id="result-title">伝説のライブ成功！</h2>
+        <div id="result-stats" class="result-stats"></div>
+        <button id="next-stage-button" class="primary hidden">次のステージへ</button>
+        <button id="again-button" class="primary">もう一度ライブ！</button>
+      </div>
+    </section>
+
+    <div id="joystick" aria-label="移動スティック"><div id="stick"></div></div>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const characters = [
+        { id: "sayu", name: "さゆ・すたー", tagline: "王道キラキラ", weapon: "ウインク・ハート", skill: "経験値を広く集める", emoji: "🌟", color: "#ff85bd", altColor: "#bca2ff", hp: 100, speed: 205, range: 1.35, damage: 1, attackSpeed: 1 },
+        { id: "momoru", name: "ももる・ましる", tagline: "病みかわ小悪魔", weapon: "メンヘラ・オーラ", skill: "敵を鈍足にして継続攻撃", emoji: "🖤", color: "#e78bff", altColor: "#ff8fc2", hp: 90, speed: 190, range: 1.1, damage: 1.08, attackSpeed: 1 },
+        { id: "au", name: "あう・とにー", tagline: "破天荒ロック", weapon: "デスボイス・シャウト", skill: "高速移動＆全方位攻撃", emoji: "🎸", color: "#ff9c64", altColor: "#ffe27e", hp: 92, speed: 228, range: 1, damage: 1.12, attackSpeed: 1.16 },
+        { id: "satan", name: "さーたんまん", tagline: "愛と正義のヒーロー", weapon: "さーたんパンチ", skill: "高耐久＆強力な近接攻撃", emoji: "💖", color: "#7ce6d0", altColor: "#ff85bd", hp: 135, speed: 180, range: 1, damage: 1.2, attackSpeed: .86 }
+      ];
+
+      const characterImageFiles = {
+        sayu: "sayu.png",
+        momoru: "momo.png",
+        au: "au.png",
+        satan: "satan.png"
+      };
+      const characterImages = {};
+      for (const character of characters) {
+        const image = new Image();
+        image.src = `pic/${characterImageFiles[character.id]}`;
+        image.addEventListener("error", () => console.error("キャラクター画像を読み込めませんでした。", image.src));
+        characterImages[character.id] = image;
+      }
+
+      const soundPatterns = {
+        ui: { start: 520, end: 680, duration: .055, type: "sine", volume: .045, cooldown: .045 },
+        attack: { start: 720, end: 430, duration: .085, type: "triangle", volume: .035, cooldown: .14 },
+        hit: { start: 260, end: 170, duration: .045, type: "square", volume: .025, cooldown: .055 },
+        kill: { start: 520, end: 880, duration: .08, type: "sine", volume: .055, cooldown: .06 },
+        damage: { start: 150, end: 70, duration: .14, type: "sawtooth", volume: .07, cooldown: .22 },
+        level: { start: 620, end: 1100, duration: .3, type: "sine", volume: .08, cooldown: .1 },
+        chest: { start: 720, end: 1420, duration: .4, type: "triangle", volume: .085, cooldown: .1 },
+        heal: { start: 460, end: 880, duration: .18, type: "sine", volume: .06, cooldown: .1 },
+        warning: { start: 900, end: 360, duration: .28, type: "sawtooth", volume: .06, cooldown: .1 },
+        boss: { start: 220, end: 55, duration: .6, type: "sawtooth", volume: .1, cooldown: .1 },
+        win: { start: 520, end: 1040, duration: .45, type: "sine", volume: .11, cooldown: .1 },
+        lose: { start: 320, end: 90, duration: .55, type: "triangle", volume: .1, cooldown: .1 }
+      };
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const liveMusic = document.getElementById("live-bgm");
+      liveMusic.volume = .35;
+      liveMusic.addEventListener("error", () =>
+        console.error("ライブBGMを読み込めませんでした。", liveMusic.currentSrc || liveMusic.querySelector("source").src));
+      let audioContext = null;
+      let audioEnabled = true;
+      const lastSoundTimes = {};
+
+      const stages = [
+        { name: "秋葉原・地下ライブハウス", shortName: "地下ライブ", description: "密集する最前列", background: "#15111e", grid: "rgba(255,255,255,.035)", accent: "#ff84c3" },
+        { name: "噴水広場・リリイベ会場", shortName: "噴水広場", description: "広場とケータリング", background: "#101923", grid: "rgba(117,209,255,.05)", accent: "#71d9f4" },
+        { name: "真夏の野外アイドルフェス", shortName: "野外フェス", description: "熱中症エリアに注意", background: "#211a12", grid: "rgba(255,218,122,.05)", accent: "#ffc46c" },
+        { name: "日本武道館・最終決戦", shortName: "日本武道館", description: "360度から押し寄せる", background: "#1c111b", grid: "rgba(255,112,142,.05)", accent: "#ff708e" }
+      ];
+
+      const baseWeapons = {
+        sayu: { id: "heart", name: "ウインク・ハート", icon: "💗" },
+        momoru: { id: "aura", name: "メンヘラ・オーラ", icon: "🖤" },
+        au: { id: "shout", name: "デスボイス・シャウト", icon: "🎸" },
+        satan: { id: "punch", name: "さーたんパンチ", icon: "👊" }
+      };
+
+      const lessonCatalog = [
+        { id: "power", name: "ボーカルレッスン", description: "攻撃力 +5%", cost: level => 20 + level * 15 },
+        { id: "mental", name: "メンタルトレーニング", description: "最大メンタル +10", cost: level => 18 + level * 14 },
+        { id: "speed", name: "ダンスレッスン", description: "移動速度 +4%", cost: level => 16 + level * 12 },
+        { id: "guard", name: "護身術レッスン", description: "被ダメージ軽減 +3%", cost: level => 22 + level * 18 }
+      ];
+
+      const enemyNames = {
+        front: "最前管理",
+        rush: "オタ芸マン",
+        yell: "家虎叫び",
+        masai: "マサイ族",
+        stalker: "認知厨",
+        to: "TO",
+        boss: "ゴシップ記者"
+      };
+
+      const saveKey = "idol-survivors-profile-v1";
+      const emptyProfile = () => ({
+        cheki: 0,
+        lessons: { power: 0, mental: 0, speed: 0, guard: 0 },
+        unlockedStage: 0,
+        stageClears: [0, 0, 0, 0],
+        totalKills: 0,
+        runs: 0,
+        enemyKills: {},
+        idolKills: {},
+        evolvedWeapons: 0,
+        selectedSkins: {},
+        unlockedSkins: []
+      });
+      let saveWarning = "";
+
+      function loadProfile() {
+        try {
+          const raw = localStorage.getItem(saveKey);
+          if (!raw) return emptyProfile();
+          const saved = JSON.parse(raw);
+          if (!saved || typeof saved !== "object" || Array.isArray(saved)) {
+            throw new Error("セーブデータの形式が正しくありません。");
+          }
+          const profile = { ...emptyProfile(), ...saved };
+          profile.lessons = { ...emptyProfile().lessons, ...(saved.lessons || {}) };
+          profile.stageClears = (Array.isArray(saved.stageClears) ? saved.stageClears : []).concat([0, 0, 0, 0]).slice(0, 4);
+          profile.enemyKills = saved.enemyKills && typeof saved.enemyKills === "object" ? saved.enemyKills : {};
+          profile.idolKills = saved.idolKills && typeof saved.idolKills === "object" ? saved.idolKills : {};
+          profile.selectedSkins = saved.selectedSkins && typeof saved.selectedSkins === "object" ? saved.selectedSkins : {};
+          profile.unlockedSkins = Array.isArray(saved.unlockedSkins) ? saved.unlockedSkins : [];
+          profile.unlockedStage = Math.max(0, Math.min(stages.length - 1, Number(profile.unlockedStage) || 0));
+          profile.cheki = Math.max(0, Number(profile.cheki) || 0);
+          profile.totalKills = Math.max(0, Number(profile.totalKills) || 0);
+          profile.runs = Math.max(0, Number(profile.runs) || 0);
+          profile.evolvedWeapons = Math.max(0, Number(profile.evolvedWeapons) || 0);
+          for (const lesson of lessonCatalog) {
+            profile.lessons[lesson.id] = Math.max(0, Math.min(10, Number(profile.lessons[lesson.id]) || 0));
+          }
+          for (const enemyId of Object.keys(enemyNames)) {
+            profile.enemyKills[enemyId] = Math.max(0, Number(profile.enemyKills[enemyId]) || 0);
+          }
+          for (const character of characters) {
+            profile.idolKills[character.id] = Math.max(0, Number(profile.idolKills[character.id]) || 0);
+          }
+          profile.stageClears = profile.stageClears.map(value => Math.max(0, Number(value) || 0));
+          profile.unlockedSkins = profile.unlockedSkins.filter(skin =>
+            characters.some(character => skin === `${character.id}-alt`));
+          return profile;
+        } catch (error) {
+          console.error("セーブデータを読み込めませんでした。", error);
+          saveWarning = "セーブデータを読み込めませんでした。新しいデータで開始します。";
+          return emptyProfile();
+        }
+      }
+
+      const profile = loadProfile();
+
+      const weaponCatalog = [
+        { id: "laser", name: "レス（指差し）", icon: "☝️", description: "遠くの敵をロックオンしてレーザー！", type: "weapon" },
+        { id: "ball", name: "サインボール投げ", icon: "⚾", description: "跳ね回るボールで敵をまとめて攻撃！", type: "weapon" },
+        { id: "kiss", name: "爆レス・投げキッス", icon: "💋", description: "着弾点で弾けるキスマークを飛ばす！", type: "weapon" },
+        { id: "handshake", name: "神対応・握手会", icon: "🤝", description: "周囲を回る握手の手で敵を弾き飛ばす！", type: "weapon" },
+        { id: "mc", name: "MCトーク", icon: "🎤", description: "みんなの動きを止めて長話ダメージ！", type: "weapon" }
+      ];
+
+      const passiveCatalog = [
+        { id: "boots", name: "厚底ブーツ", icon: "👢", description: "移動速度が上がる", type: "passive" },
+        { id: "mic", name: "高性能マイク", icon: "🎙️", description: "ファンサの威力・速度・範囲が上がる", type: "passive" },
+        { id: "letters", name: "ファンレターの束", icon: "💌", description: "経験値を多く獲得できる", type: "passive" },
+        { id: "manager", name: "マネージャーの護衛", icon: "🛡️", description: "受けるダメージを軽減", type: "passive" },
+        { id: "buzz", name: "SNSのバズり", icon: "📱", description: "攻撃が強化される", type: "passive" }
+      ];
+
+      const maxEnemies = 220;
+      const maxGems = 500;
+      const canvas = document.getElementById("stage");
+      const ctx = canvas.getContext("2d");
+      const ui = {
+        title: document.getElementById("title-screen"),
+        instructions: document.getElementById("instructions-screen"),
+        grid: document.getElementById("character-grid"),
+        stageGrid: document.getElementById("stage-grid"),
+        skinPicker: document.getElementById("skin-picker"),
+        lessonsPanel: document.getElementById("lessons-panel"),
+        lessonList: document.getElementById("lesson-list"),
+        collectionPanel: document.getElementById("collection-panel"),
+        collectionContent: document.getElementById("collection-content"),
+        cheki: document.getElementById("cheki-balance"),
+        saveWarning: document.getElementById("save-warning"),
+        hud: document.getElementById("hud"),
+        level: document.getElementById("level-screen"),
+        options: document.getElementById("upgrade-options"),
+        pause: document.getElementById("pause-screen"),
+        result: document.getElementById("result-screen"),
+        pauseButton: document.getElementById("pause-button"),
+        audioToggle: document.getElementById("audio-toggle"),
+        hp: document.getElementById("hp-fill"),
+        xp: document.getElementById("xp-fill"),
+        name: document.getElementById("character-name"),
+        stageName: document.getElementById("stage-label"),
+        timer: document.getElementById("timer"),
+        levelLabel: document.getElementById("level-label"),
+        enemyLabel: document.getElementById("enemy-label"),
+        goal: document.getElementById("goal-label")
+      };
+
+      const keys = new Set();
+      const state = {
+        scene: "title",
+        selected: 0,
+        selectedStage: 0,
+        stageIndex: 0,
+        player: null,
+        elapsed: 0,
+        duration: 300,
+        spawnClock: 0,
+        nextToSpawn: 60,
+        attackClock: 0,
+        frameTime: 0,
+        kills: 0,
+        enemies: [],
+        enemyKills: {},
+        projectiles: [],
+        hostileShots: [],
+        gems: [],
+        chests: [],
+        props: [],
+        recoveries: [],
+        effects: [],
+        worldDecor: [],
+        level: 1,
+        xp: 0,
+        nextXp: 5,
+        weaponLevels: {},
+        evolvedWeapons: {},
+        passives: {},
+        bossSpawned: false,
+        bossDefeated: false,
+        hazardClock: 35,
+        hazard: null,
+        runRecorded: false,
+        lastTimestamp: 0,
+        joystick: { active: false, pointerId: null, x: 0, y: 0 }
+      };
+
+      function resize() {
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(window.innerWidth * ratio);
+        canvas.height = Math.floor(window.innerHeight * ratio);
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+
+      function show(element, visible) { element.classList.toggle("hidden", !visible); }
+
+      function getAudioContext() {
+        if (!AudioContextClass) return null;
+        try {
+          if (!audioContext) audioContext = new AudioContextClass();
+          if (audioContext.state === "suspended") {
+            audioContext.resume().catch(error => console.error("効果音を再生できませんでした。", error));
+          }
+          return audioContext;
+        } catch (error) {
+          console.error("効果音を初期化できませんでした。", error);
+          return null;
+        }
+      }
+
+      function playSound(name) {
+        if (!audioEnabled) return;
+        const pattern = soundPatterns[name];
+        const context = getAudioContext();
+        if (!pattern || !context) return;
+        const now = context.currentTime;
+        if (now - (lastSoundTimes[name] || -Infinity) < pattern.cooldown) return;
+        lastSoundTimes[name] = now;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = pattern.type;
+        oscillator.frequency.setValueAtTime(pattern.start, now);
+        oscillator.frequency.exponentialRampToValueAtTime(pattern.end, now + pattern.duration);
+        gain.gain.setValueAtTime(.0001, now);
+        gain.gain.exponentialRampToValueAtTime(pattern.volume, now + .01);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + pattern.duration);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(now);
+        oscillator.stop(now + pattern.duration + .01);
+      }
+
+      function startMusic() {
+        if (!audioEnabled) return;
+        liveMusic.play().catch(error => {
+          if (error.name !== "AbortError") console.warn("ライブBGMを再生できませんでした。", error);
+        });
+      }
+
+      function stopMusic(reset) {
+        liveMusic.pause();
+        if (reset) liveMusic.currentTime = 0;
+      }
+
+      function updateAudioToggle() {
+        ui.audioToggle.textContent = audioEnabled ? "♫" : "🔇";
+        ui.audioToggle.setAttribute("aria-label", audioEnabled ? "音声をミュート" : "音声を再生");
+      }
+
+      function saveProfile() {
+        try {
+          localStorage.setItem(saveKey, JSON.stringify(profile));
+          saveWarning = "";
+        } catch (error) {
+          console.error("セーブデータを保存できませんでした。", error);
+          saveWarning = "保存できませんでした。ブラウザーのストレージ設定をご確認ください。";
+        }
+        ui.saveWarning.textContent = saveWarning;
+        show(ui.saveWarning, Boolean(saveWarning));
+      }
+
+      function buildStageCards() {
+        ui.stageGrid.innerHTML = "";
+        stages.forEach((stage, index) => {
+          const button = document.createElement("button");
+          const unlocked = index <= profile.unlockedStage;
+          button.className = "stage-card" + (index === state.selectedStage ? " selected" : "");
+          button.type = "button";
+          button.disabled = !unlocked;
+          button.setAttribute("aria-pressed", index === state.selectedStage ? "true" : "false");
+          button.innerHTML = `<strong>${unlocked ? "" : "🔒 "}${stage.shortName}</strong><small>${unlocked ? stage.description : "前のステージをクリアして解放"}</small>`;
+          button.addEventListener("click", () => {
+            if (!unlocked) return;
+            state.selectedStage = index;
+            buildStageCards();
+          });
+          ui.stageGrid.appendChild(button);
+        });
+      }
+
+      function createStageProps(stageIndex) {
+        const props = [];
+        for (let i = 0; i < 16; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const distance = 170 + Math.random() * 650;
+          props.push({
+            x: Math.cos(angle) * distance,
+            y: Math.sin(angle) * distance,
+            hp: 2,
+            maxHp: 2,
+            hitClock: 0,
+            kind: stageIndex === 1 ? "fountain" : stageIndex === 3 ? "barrier" : "amp"
+          });
+        }
+        return props;
+      }
+
+      function buildSkinPicker() {
+        const character = characters[state.selected];
+        const skinId = `${character.id}-alt`;
+        const hasAltSkin = profile.unlockedSkins.includes(skinId);
+        const selectedSkin = profile.selectedSkins[character.id] || "base";
+        ui.skinPicker.innerHTML = "<strong>衣装：</strong>";
+        const options = [{ id: "base", name: "通常衣装" }];
+        if (hasAltSkin) options.push({ id: "alt", name: "ライブ衣装" });
+        else options.push({ id: "locked", name: "ライブ衣装（累計100浄化で解放）", locked: true });
+        for (const skin of options) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "skin-choice" + (skin.id === selectedSkin ? " selected" : "");
+          button.textContent = skin.name;
+          button.disabled = Boolean(skin.locked);
+          button.addEventListener("click", () => {
+            profile.selectedSkins[character.id] = skin.id;
+            saveProfile();
+            buildSkinPicker();
+          });
+          ui.skinPicker.appendChild(button);
+        }
+      }
+
+      function renderLessons() {
+        ui.cheki.textContent = `チェキ券 ${profile.cheki}`;
+        ui.lessonList.innerHTML = "";
+        for (const lesson of lessonCatalog) {
+          const level = Number(profile.lessons[lesson.id]) || 0;
+          const cost = lesson.cost(level);
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "lesson-buy";
+          button.disabled = level >= 10 || profile.cheki < cost;
+          button.innerHTML = `<span><b>${lesson.name} Lv.${level}</b><small>${lesson.description}</small></span><strong>${level >= 10 ? "MAX" : `🎟 ${cost}`}</strong>`;
+          button.addEventListener("click", () => {
+            if (level >= 10 || profile.cheki < cost) return;
+            profile.cheki -= cost;
+            profile.lessons[lesson.id] = level + 1;
+            saveProfile();
+            renderLessons();
+          });
+          ui.lessonList.appendChild(button);
+        }
+      }
+
+      function renderCollection() {
+        const achievements = [
+          [profile.totalKills > 0, "初めての神対応"],
+          [profile.totalKills >= 100, "100人を浄化"],
+          [profile.stageClears.some(count => count > 0), "初ライブ成功"],
+          [profile.evolvedWeapons > 0, "ファンサ覚醒"]
+        ];
+        const achievementsHtml = achievements.map(([unlocked, name]) => `<li>${unlocked ? "🏆" : "🔒"} ${name}</li>`).join("");
+        const bestiaryHtml = Object.entries(enemyNames).map(([id, name]) =>
+          `<li>${name}：${profile.enemyKills[id] || 0}</li>`).join("");
+        const skinsHtml = characters.map(character => {
+          const unlocked = profile.unlockedSkins.includes(`${character.id}-alt`);
+          return `<li>${character.name}：${unlocked ? "ライブ衣装 解放済み" : `${profile.idolKills[character.id] || 0}/100 浄化`}</li>`;
+        }).join("");
+        ui.collectionContent.innerHTML =
+          `<section><h3>実績</h3><ul>${achievementsHtml}</ul></section>` +
+          `<section><h3>ヲタク図鑑（累計）</h3><ul>${bestiaryHtml}</ul></section>` +
+          `<section><h3>衣装解放</h3><ul>${skinsHtml}</ul><p>累計100人の浄化でライブ衣装を獲得。</p></section>`;
+      }
+
+      function renderMetaUI() {
+        renderLessons();
+        renderCollection();
+        buildStageCards();
+        buildSkinPicker();
+        ui.saveWarning.textContent = saveWarning;
+        show(ui.saveWarning, Boolean(saveWarning));
+      }
+
+      function buildCharacterCards() {
+        ui.grid.innerHTML = "";
+        characters.forEach((character, index) => {
+          const button = document.createElement("button");
+          button.className = "character-card" + (index === state.selected ? " selected" : "");
+          button.type = "button";
+          button.setAttribute("aria-pressed", index === state.selected ? "true" : "false");
+          button.innerHTML = `<span class="emoji">${character.emoji}</span><strong>${character.name}</strong><small>${character.tagline}<br>初期ファンサ：${character.weapon}<br>${character.skill}</small>`;
+          button.addEventListener("click", () => {
+            state.selected = index;
+            buildCharacterCards();
+            buildSkinPicker();
+          });
+          ui.grid.appendChild(button);
+        });
+      }
+
+      function startGame() {
+        const character = characters[state.selected];
+        const selectedSkin = profile.selectedSkins[character.id] || "base";
+        state.player = {
+          x: 0, y: 0, radius: 17,
+          hp: character.hp + profile.lessons.mental * 10,
+          maxHp: character.hp + profile.lessons.mental * 10,
+          speed: character.speed * (1 + profile.lessons.speed * .04),
+          color: selectedSkin === "alt" ? character.altColor : character.color,
+          armor: (character.id === "satan" ? .12 : 0) + profile.lessons.guard * .03,
+          character, skin: selectedSkin,
+          damage: character.damage * (1 + profile.lessons.power * .05) * (selectedSkin === "alt" ? 1.03 : 1),
+          attackSpeed: character.attackSpeed,
+          pickupRange: character.id === "sayu" ? 140 : 76, facingX: 1, facingY: 0,
+          invulnerable: 0, guardianAngle: 0, guardianClock: 0
+        };
+        state.stageIndex = state.selectedStage;
+        state.elapsed = 0;
+        state.spawnClock = 0;
+        state.nextToSpawn = 60;
+        state.attackClock = 0;
+        state.frameTime = 0;
+        state.kills = 0;
+        state.enemies = [];
+        state.enemyKills = {};
+        state.projectiles = [];
+        state.hostileShots = [];
+        state.gems = [];
+        state.chests = [];
+        state.props = createStageProps(state.stageIndex);
+        state.recoveries = [];
+        state.effects = [];
+        state.level = 1;
+        state.xp = 0;
+        state.nextXp = 5;
+        state.weaponLevels = { [baseWeapons[character.id].id]: 1 };
+        state.evolvedWeapons = {};
+        state.passives = {};
+        state.bossSpawned = false;
+        state.bossDefeated = false;
+        state.hazardClock = 35;
+        state.hazard = null;
+        state.runRecorded = false;
+        state.scene = "playing";
+        state.worldDecor = [];
+        for (let i = 0; i < 80; i++) {
+          state.worldDecor.push({ x: (Math.random() - .5) * 2600, y: (Math.random() - .5) * 2000, size: 2 + Math.random() * 5 });
+        }
+        ui.name.textContent = `${character.emoji} ${character.name}`;
+        ui.stageName.textContent = stages[state.stageIndex].name;
+        show(ui.title, false);
+        show(ui.instructions, false);
+        show(ui.level, false);
+        show(ui.pause, false);
+        show(ui.result, false);
+        show(ui.hud, true);
+        show(ui.pauseButton, true);
+        show(ui.audioToggle, true);
+        updateAudioToggle();
+        startMusic();
+        updateHud();
+      }
+
+      function currentDamage() {
+        const p = state.player;
+        const mic = 1 + (state.passives.mic || 0) * .18;
+        const buzz = 1 + (state.passives.buzz || 0) * .15;
+        const pressure = p.character.id === "au" ? 1 + (1 - p.hp / p.maxHp) * .45 : 1;
+        return p.damage * mic * buzz * pressure;
+      }
+
+      function nearestEnemy(maxDistance) {
+        let closest = null;
+        let best = maxDistance * maxDistance;
+        for (const enemy of state.enemies) {
+          const dx = enemy.x - state.player.x;
+          const dy = enemy.y - state.player.y;
+          const distance = dx * dx + dy * dy;
+          if (distance < best) { closest = enemy; best = distance; }
+        }
+        return closest;
+      }
+
+      function fireProjectile(target, options) {
+        if (!target) return;
+        const dx = target.x - state.player.x;
+        const dy = target.y - state.player.y;
+        const length = Math.hypot(dx, dy) || 1;
+        const speed = options.speed || 450;
+        state.projectiles.push({
+          x: state.player.x, y: state.player.y,
+          vx: dx / length * speed, vy: dy / length * speed,
+          radius: options.radius || 7,
+          damage: options.damage || currentDamage(),
+          color: options.color || "#ff8fc9",
+          life: options.life || 1.8,
+          splash: options.splash || 0,
+          pierce: options.pierce || 0,
+          bounce: options.bounce || 0,
+          edgeBounce: Boolean(options.edgeBounce)
+        });
+      }
+
+      function addEffect(x, y, radius, color, duration) {
+        state.effects.push({ x, y, radius, color, life: duration || .35, total: duration || .35 });
+      }
+
+      function addGem(gem) {
+        if (state.gems.length < maxGems) {
+          state.gems.push(gem);
+          return;
+        }
+
+        let nearest = state.gems[0];
+        let nearestDistance = Infinity;
+        for (const existing of state.gems) {
+          const dx = existing.x - gem.x;
+          const dy = existing.y - gem.y;
+          const distance = dx * dx + dy * dy;
+          if (distance < nearestDistance) {
+            nearest = existing;
+            nearestDistance = distance;
+          }
+        }
+        nearest.value += gem.value;
+      }
+
+      function damageEnemy(enemy, damage, knockbackX, knockbackY) {
+        if (!enemy || enemy.dead) return;
+        const adjustedDamage = state.player.character.id === "momoru" && enemy.slow > 0 ? damage * 1.35 : damage;
+        enemy.hp -= adjustedDamage;
+        playSound(enemy.hp <= 0 ? "kill" : "hit");
+        if (knockbackX || knockbackY) {
+          enemy.x += knockbackX * .07;
+          enemy.y += knockbackY * .07;
+        }
+        if (enemy.hp <= 0) {
+          enemy.dead = true;
+          state.kills++;
+          state.enemyKills[enemy.type] = (state.enemyKills[enemy.type] || 0) + 1;
+          const amount = enemy.boss ? 18 : enemy.type === "to" ? 5 : 1;
+          for (let i = 0; i < amount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const spread = Math.random() * (enemy.boss ? 46 : 14);
+            addGem({
+              x: enemy.x + Math.cos(angle) * spread,
+              y: enemy.y + Math.sin(angle) * spread,
+              value: enemy.boss ? 3 : enemy.type === "to" ? 2 : 1,
+              radius: enemy.boss ? 6 : 4,
+              color: enemy.boss ? "#ffd46e" : "#71f1dc"
+            });
+          }
+          addEffect(enemy.x, enemy.y, enemy.radius * 1.7, enemy.boss ? "#ffd46e" : "#ff93c7", .4);
+          if (enemy.boss) {
+            state.bossDefeated = true;
+            finishGame(true);
+          } else if (enemy.type === "to") {
+            state.chests.push({ x: enemy.x, y: enemy.y, radius: 15 });
+          }
+        }
+      }
+
+      function spawnEnemy() {
+        const p = state.player;
+        const angle = Math.random() * Math.PI * 2;
+        const distance = (Math.max(window.innerWidth, window.innerHeight) * .62 + 80) *
+          [.78, .88, 1.05, .72][state.stageIndex];
+        const progress = state.elapsed / state.duration;
+        let enemy;
+        const roll = Math.random();
+        if (state.elapsed > 50 && roll < .16) {
+          enemy = { type: "yell", name: "家虎叫び", radius: 13, hp: 6 + progress * 8, speed: 42, damage: 8, color: "#b99aff", xp: 1 };
+        } else if (state.elapsed > 65 && roll < .42) {
+          enemy = { type: "masai", name: "マサイ族", radius: 13, hp: 5 + progress * 7, speed: 100 + progress * 38, damage: 10, color: "#f6a257", xp: 1 };
+        } else if (state.elapsed > 35 && roll < .61) {
+          enemy = { type: "stalker", name: "認知厨", radius: 11, hp: 3.5 + progress * 4.5, speed: 115 + progress * 42, damage: 9, color: "#c184dc", xp: 1 };
+        } else if (state.elapsed > 18 && roll < .81) {
+          enemy = { type: "rush", name: "オタ芸マン", radius: 12, hp: 3 + progress * 4, speed: 145 + progress * 35, damage: 12, color: "#ff6d86", xp: 1 };
+        } else {
+          enemy = { type: "front", name: "最前管理", radius: 10, hp: .8 + progress * .8, speed: 53 + progress * 30, damage: 8, color: "#c4a4dc", xp: 1 };
+        }
+        enemy.hp *= 1 + state.stageIndex * .18;
+        state.enemies.push({
+          ...enemy, x: p.x + Math.cos(angle) * distance, y: p.y + Math.sin(angle) * distance,
+          maxHp: enemy.hp, slow: 0, stun: 0, leapTime: 0,
+          jumpCooldown: 2 + Math.random() * 2, attackCooldown: 1.2, dead: false
+        });
+      }
+
+      function spawnTreasureEnemy() {
+        const p = state.player;
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.min(Math.max(window.innerWidth, window.innerHeight) * .62 + 80, 520);
+        const progress = state.elapsed / state.duration;
+        const enemy = {
+          type: "to", name: "TO", radius: 25, hp: (18 + progress * 24) * (1 + state.stageIndex * .18),
+          speed: 34 + progress * 10, damage: 17, color: "#e2b675", xp: 5,
+          x: p.x + Math.cos(angle) * distance, y: p.y + Math.sin(angle) * distance,
+          maxHp: (18 + progress * 24) * (1 + state.stageIndex * .18),
+          slow: 0, stun: 0, leapTime: 0, jumpCooldown: 0, attackCooldown: 1.2, dead: false
+        };
+        state.enemies.push(enemy);
+        playSound("warning");
+      }
+
+      function spawnBoss() {
+        const p = state.player;
+        const angle = Math.atan2(-p.y, -p.x) + Math.PI + (Math.random() - .5);
+        const distance = Math.max(window.innerWidth, window.innerHeight) * .62;
+        state.enemies.push({
+          type: "boss", name: "炎上系ゴシップ記者", radius: 42,
+          hp: 260 * (1 + state.stageIndex * .3), maxHp: 260 * (1 + state.stageIndex * .3),
+          speed: 47, damage: 24, x: p.x + Math.cos(angle) * distance, y: p.y + Math.sin(angle) * distance,
+          slow: 0, stun: 0, leapTime: 0, jumpCooldown: 0,
+          attackCooldown: 2.4, flashCooldown: 5, dead: false, boss: true
+        });
+        state.bossSpawned = true;
+        ui.goal.textContent = "FINAL BOSS!";
+        addEffect(state.player.x, state.player.y, 210, "#ff497c", .9);
+        playSound("boss");
+      }
+
+      function updateStageObjects(dt) {
+        const p = state.player;
+        for (const prop of state.props) {
+          prop.hitClock = Math.max(0, prop.hitClock - dt);
+          if (prop.hitClock === 0 && Math.hypot(prop.x - p.x, prop.y - p.y) < 52) {
+            prop.hp -= currentDamage();
+            prop.hitClock = .55;
+            addEffect(prop.x, prop.y, 28, stages[state.stageIndex].accent, .18);
+            if (prop.hp <= 0) {
+              prop.broken = true;
+              if (Math.random() < .5) {
+                state.recoveries.push({ x: prop.x, y: prop.y, radius: 11 });
+              }
+            }
+          }
+        }
+        state.props = state.props.filter(prop => !prop.broken);
+
+        for (const item of state.recoveries) {
+          if (Math.hypot(item.x - p.x, item.y - p.y) <= p.radius + item.radius + 5) {
+            p.hp = Math.min(p.maxHp, p.hp + 35);
+            item.collected = true;
+            addEffect(p.x, p.y, 52, "#7cf2ce", .4);
+            playSound("heal");
+          }
+        }
+        state.recoveries = state.recoveries.filter(item => !item.collected);
+      }
+
+      function updateHazard(dt) {
+        if (state.stageIndex !== 2) return;
+        const p = state.player;
+        if (!state.hazard) {
+          state.hazardClock -= dt;
+          if (state.hazardClock <= 0) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 220 + Math.random() * 180;
+            state.hazard = {
+              x: p.x + Math.cos(angle) * distance,
+              y: p.y + Math.sin(angle) * distance,
+              radius: 125,
+              warning: 4,
+              active: 8
+            };
+            playSound("warning");
+          }
+          return;
+        }
+        if (state.hazard.warning > 0) {
+          state.hazard.warning = Math.max(0, state.hazard.warning - dt);
+          return;
+        }
+        state.hazard.active -= dt;
+        if (Math.hypot(p.x - state.hazard.x, p.y - state.hazard.y) < state.hazard.radius) {
+          p.hp -= 5 * dt;
+          if (p.hp <= 0) {
+            p.hp = 0;
+            finishGame(false);
+          }
+        }
+        if (state.hazard.active <= 0) {
+          state.hazard = null;
+          state.hazardClock = 35;
+        }
+      }
+
+      function useBaseAttack(dt) {
+        const p = state.player;
+        const id = p.character.id;
+        const cooldown = (id === "momoru" ? .62 : id === "au" ? .86 : id === "satan" ? 1.08 : .82) / p.attackSpeed / (1 + (state.passives.buzz || 0) * .1);
+        state.attackClock += dt;
+        if (state.attackClock < cooldown) return;
+        state.attackClock = 0;
+        playSound("attack");
+        const target = nearestEnemy(620);
+        const baseWeapon = baseWeapons[id];
+        const weaponLevel = state.weaponLevels[baseWeapon.id] || 1;
+        const power = currentDamage() * weaponLevel * 1.25;
+        const range = p.character.range * (1 + (state.passives.mic || 0) * .12);
+
+        if (id === "momoru") {
+          const radius = 92 * range;
+          addEffect(p.x, p.y, radius, "#dc70ec", .32);
+          for (const enemy of state.enemies) {
+            if (Math.hypot(enemy.x - p.x, enemy.y - p.y) < radius + enemy.radius) {
+              enemy.slow = 1.4;
+              damageEnemy(enemy, power * .72, 0, 0);
+            }
+          }
+        } else if (id === "au") {
+          const radius = 138 * range;
+          addEffect(p.x, p.y, radius, "#ffa06b", .36);
+          for (const enemy of state.enemies) {
+            const dx = enemy.x - p.x, dy = enemy.y - p.y;
+            if (Math.hypot(dx, dy) < radius + enemy.radius) {
+              const d = Math.hypot(dx, dy) || 1;
+              damageEnemy(enemy, power * 1.55, dx / d * 25, dy / d * 25);
+            }
+          }
+        } else if (id === "satan") {
+          const radius = 130 * range;
+          const aim = target ? Math.atan2(target.y - p.y, target.x - p.x) : Math.atan2(p.facingY, p.facingX);
+          addEffect(p.x + Math.cos(aim) * 56, p.y + Math.sin(aim) * 56, radius * .72, "#6fe8cf", .3);
+          for (const enemy of state.enemies) {
+            const dx = enemy.x - p.x, dy = enemy.y - p.y;
+            const d = Math.hypot(dx, dy);
+            const a = Math.atan2(dy, dx);
+            if (d < radius + enemy.radius && Math.abs(Math.atan2(Math.sin(a - aim), Math.cos(a - aim))) < .95) {
+              damageEnemy(enemy, power * 2.15, dx / (d || 1) * 36, dy / (d || 1) * 36);
+            }
+          }
+        } else {
+          if (target) {
+            const evolved = state.evolvedWeapons.heart;
+            const count = evolved ? 4 : 1 + Math.min(state.passives.buzz || 0, 3);
+            const angle = Math.atan2(target.y - p.y, target.x - p.x);
+            for (let i = 0; i < count; i++) {
+              const spread = (i - (count - 1) / 2) * (evolved ? .16 : .1);
+              state.projectiles.push({
+                x: p.x, y: p.y,
+                vx: Math.cos(angle + spread) * (evolved ? 650 : 520),
+                vy: Math.sin(angle + spread) * (evolved ? 650 : 520),
+                damage: power * (evolved ? 2.5 : 1),
+                radius: evolved ? 24 : 9,
+                color: evolved ? "#ff4fa6" : "#ff87c2",
+                life: evolved ? 2.5 : 1.8,
+                splash: 0,
+                pierce: evolved ? 40 : weaponLevel > 3 ? 1 : 0,
+                bounce: 0
+              });
+            }
+            if (evolved) addEffect(p.x, p.y, 150, "#ff6bb7", .35);
+          }
+        }
+      }
+
+      function useExtraWeapons(dt) {
+        for (const weapon of weaponCatalog) {
+          const id = weapon.id;
+          if (!state.weaponLevels[id]) continue;
+          const level = state.weaponLevels[id];
+          if (id === "handshake") {
+            state.weaponLevels.handshake_clock = (state.weaponLevels.handshake_clock || 0) + dt;
+            if (state.weaponLevels.handshake_clock >= .25) {
+              state.weaponLevels.handshake_clock -= .25;
+              const count = Math.min(1 + Math.ceil(level / 2), 4);
+              const orbit = 72 + level * 9;
+              for (let i = 0; i < count; i++) {
+                const angle = state.elapsed * 2.8 + i * Math.PI * 2 / count;
+                const x = state.player.x + Math.cos(angle) * orbit;
+                const y = state.player.y + Math.sin(angle) * orbit;
+                for (const enemy of state.enemies) {
+                  if (Math.hypot(enemy.x - x, enemy.y - y) < enemy.radius + 22) {
+                    damageEnemy(enemy, currentDamage() * .8, Math.cos(angle) * 18, Math.sin(angle) * 18);
+                  }
+                }
+              }
+            }
+            continue;
+          }
+          state.weaponLevels[`${id}_clock`] = (state.weaponLevels[`${id}_clock`] || 0) + dt;
+          const cooldown = id === "laser" ? 1.5 : id === "ball" ? 2.2 : id === "kiss" ? 2 : 5.2;
+          if (state.weaponLevels[`${id}_clock`] < cooldown / (1 + (state.passives.buzz || 0) * .1)) continue;
+          state.weaponLevels[`${id}_clock`] = 0;
+          let target = nearestEnemy(700);
+          if (id === "laser") {
+            const candidates = state.enemies.filter(enemy =>
+              Math.hypot(enemy.x - state.player.x, enemy.y - state.player.y) < 700);
+            if (candidates.length) target = candidates[Math.floor(Math.random() * candidates.length)];
+          }
+          if (id === "laser" && target) {
+            const angle = Math.atan2(target.y - state.player.y, target.x - state.player.x);
+            addEffect(target.x, target.y, 44 + level * 8, "#fff494", .28);
+            for (const enemy of state.enemies) {
+              const dx = enemy.x - state.player.x, dy = enemy.y - state.player.y;
+              const projection = dx * Math.cos(angle) + dy * Math.sin(angle);
+              const side = Math.abs(dx * Math.sin(angle) - dy * Math.cos(angle));
+              if (projection > 0 && projection < 760 && side < 20 + level * 4) damageEnemy(enemy, currentDamage() * (3 + level), 0, 0);
+            }
+          } else if (id === "ball" && target) {
+            const count = Math.min(1 + Math.floor(level / 3), 4);
+            for (let i = 0; i < count; i++) {
+              const aim = Math.atan2(target.y - state.player.y, target.x - state.player.x) + (i - (count - 1) / 2) * .32;
+              state.projectiles.push({ x: state.player.x, y: state.player.y, vx: Math.cos(aim) * 360, vy: Math.sin(aim) * 360, radius: 9, damage: currentDamage() * 1.7, color: "#ffe27e", life: 3, splash: 0, pierce: 2, bounce: 3, edgeBounce: true });
+            }
+          } else if (id === "kiss" && target) {
+            fireProjectile(target, { damage: currentDamage() * 2.5, radius: 13, color: "#ff5d9c", speed: 330, splash: 72 + level * 8 });
+          } else if (id === "mc") {
+            addEffect(state.player.x, state.player.y, 650, "#9ed5ff", .7);
+            for (const enemy of state.enemies) {
+              enemy.stun = enemy.boss ? .8 : 2.4;
+              damageEnemy(enemy, currentDamage() * (1.3 + level * .3), 0, 0);
+            }
+          }
+        }
+      }
+
+      function update(dt) {
+        const p = state.player;
+        state.elapsed += dt;
+        state.frameTime += dt;
+        if (!state.bossSpawned && state.elapsed >= state.duration) spawnBoss();
+        if (!state.bossSpawned) {
+          while (state.elapsed >= state.nextToSpawn && state.nextToSpawn < state.duration) {
+            spawnTreasureEnemy();
+            state.nextToSpawn += 60;
+          }
+          state.spawnClock += dt;
+          const interval = Math.max(.24, .62 - (state.elapsed / state.duration) * .34);
+          while (state.spawnClock >= interval) {
+            state.spawnClock -= interval;
+            if (state.enemies.length < maxEnemies) spawnEnemy();
+          }
+        } else {
+          let livingEnemies = 0;
+          for (const enemy of state.enemies) {
+            if (!enemy.dead) livingEnemies++;
+          }
+          if (livingEnemies < 45 && Math.random() < dt * 1.2) spawnEnemy();
+        }
+
+        let mx = 0, my = 0;
+        if (keys.has("w") || keys.has("arrowup")) my -= 1;
+        if (keys.has("s") || keys.has("arrowdown")) my += 1;
+        if (keys.has("a") || keys.has("arrowleft")) mx -= 1;
+        if (keys.has("d") || keys.has("arrowright")) mx += 1;
+        mx += state.joystick.x;
+        my += state.joystick.y;
+        const magnitude = Math.hypot(mx, my);
+        if (magnitude > 1) { mx /= magnitude; my /= magnitude; }
+        if (magnitude > .08) {
+          const moveX = mx * p.speed * (1 + (state.passives.boots || 0) * .12) * dt;
+          const moveY = my * p.speed * (1 + (state.passives.boots || 0) * .12) * dt;
+          let nextX = p.x + moveX, nextY = p.y + moveY;
+          for (const prop of state.props) {
+            const nearestX = Math.max(prop.x - 19, Math.min(nextX, prop.x + 19));
+            const nearestY = Math.max(prop.y - 16, Math.min(nextY, prop.y + 16));
+            if (Math.hypot(nextX - nearestX, nextY - nearestY) < p.radius) {
+              if (Math.hypot(p.x + moveX - nearestX, p.y - nearestY) < p.radius) nextX = p.x;
+              if (Math.hypot(nextX - nearestX, p.y + moveY - nearestY) < p.radius) nextY = p.y;
+            }
+          }
+          p.x = nextX;
+          p.y = nextY;
+          p.facingX = mx; p.facingY = my;
+        }
+        p.invulnerable = Math.max(0, p.invulnerable - dt);
+
+        useBaseAttack(dt);
+        useExtraWeapons(dt);
+        if (p.character.id === "satan") {
+          p.guardianAngle += dt * 2.4;
+          p.guardianClock += dt;
+          if (p.guardianClock >= .35) {
+            p.guardianClock = 0;
+            const x = p.x + Math.cos(p.guardianAngle) * 112;
+            const y = p.y + Math.sin(p.guardianAngle) * 112;
+            for (const enemy of state.enemies) {
+              if (!enemy.dead && Math.hypot(enemy.x - x, enemy.y - y) < enemy.radius + 20) {
+                damageEnemy(enemy, currentDamage() * .75, Math.cos(p.guardianAngle) * 20, Math.sin(p.guardianAngle) * 20);
+              }
+            }
+          }
+        }
+
+        for (const enemy of state.enemies) {
+          if (enemy.dead) continue;
+          const dxToPlayer = p.x - enemy.x, dyToPlayer = p.y - enemy.y;
+          const distance = Math.hypot(dxToPlayer, dyToPlayer) || 1;
+          const targetX = enemy.type === "stalker" ? p.x - p.facingX * 70 : p.x;
+          const targetY = enemy.type === "stalker" ? p.y - p.facingY * 70 : p.y;
+          const dx = targetX - enemy.x, dy = targetY - enemy.y;
+          const chaseDistance = Math.hypot(dx, dy) || 1;
+          const slow = enemy.slow > 0 ? .45 : 1;
+          enemy.stun = Math.max(0, (enemy.stun || 0) - dt);
+          enemy.slow = Math.max(0, enemy.slow - dt);
+          if (enemy.type === "masai") {
+            enemy.jumpCooldown -= dt;
+            enemy.leapTime = Math.max(0, enemy.leapTime - dt);
+            if (enemy.jumpCooldown <= 0) {
+              enemy.leapTime = .42;
+              enemy.jumpCooldown = 2.8;
+            }
+          }
+          if (distance > p.radius + enemy.radius + 3 && enemy.stun <= 0) {
+            let speedFactor = enemy.type === "masai" ? 1.12 : 1;
+            if (enemy.leapTime > 0) speedFactor *= 3;
+            enemy.x += dx / chaseDistance * enemy.speed * speedFactor * slow * dt;
+            enemy.y += dy / chaseDistance * enemy.speed * speedFactor * slow * dt;
+          } else if (distance <= p.radius + enemy.radius + 3 && enemy.stun <= 0 &&
+                     enemy.attackCooldown <= 0 && p.invulnerable <= 0) {
+            const reduction = Math.min(.85, (state.passives.manager || 0) * .12 + p.armor);
+            p.hp -= enemy.damage * (1 - reduction);
+            playSound("damage");
+            p.invulnerable = .48;
+            enemy.attackCooldown = 1;
+            addEffect(p.x, p.y, 46, "#ff526f", .28);
+            if (p.character.id === "satan") {
+              for (const nearby of state.enemies) {
+                if (!nearby.dead && Math.hypot(nearby.x - p.x, nearby.y - p.y) < 112) {
+                  damageEnemy(nearby, currentDamage() * .75, nearby.x - p.x, nearby.y - p.y);
+                }
+              }
+            }
+            if (p.hp <= 0) { p.hp = 0; finishGame(false); }
+          }
+          enemy.attackCooldown -= dt;
+          if (enemy.type === "yell" && distance < 560 && enemy.attackCooldown <= 0) {
+            state.hostileShots.push({
+              x: enemy.x, y: enemy.y,
+              vx: dxToPlayer / distance * 190, vy: dyToPlayer / distance * 190,
+              radius: 10, damage: enemy.damage, life: 3, color: "#b99aff", label: "♫"
+            });
+            enemy.attackCooldown = 2.6;
+          }
+          if (enemy.boss && enemy.attackCooldown <= 0) {
+            const aimX = dxToPlayer / distance, aimY = dyToPlayer / distance;
+            state.hostileShots.push({
+              x: enemy.x, y: enemy.y, vx: aimX * 245, vy: aimY * 245,
+              radius: 11, damage: 13, life: 3, color: "#ff597f", label: "🗞️"
+            });
+            addEffect(enemy.x, enemy.y, 56, "#ff597f", .25);
+            enemy.attackCooldown = 2.2;
+          }
+          if (enemy.boss) {
+            enemy.flashCooldown -= dt;
+            if (enemy.flashCooldown <= 0) {
+              addEffect(enemy.x, enemy.y, 210, "#fff3c2", .7);
+              if (distance < 210 && p.invulnerable <= 0) {
+                p.hp -= 18 * (1 - p.armor);
+                playSound("damage");
+                p.invulnerable = .7;
+                addEffect(p.x, p.y, 62, "#fff3c2", .45);
+              }
+              enemy.flashCooldown = 7;
+            }
+          }
+        }
+
+        updateStageObjects(dt);
+        updateHazard(dt);
+
+        for (const shot of state.projectiles) {
+          shot.x += shot.vx * dt;
+          shot.y += shot.vy * dt;
+          shot.life -= dt;
+          if (shot.edgeBounce) {
+            const left = p.x - window.innerWidth / 2 + shot.radius;
+            const right = p.x + window.innerWidth / 2 - shot.radius;
+            const top = p.y - window.innerHeight / 2 + shot.radius;
+            const bottom = p.y + window.innerHeight / 2 - shot.radius;
+            if (shot.x < left || shot.x > right) {
+              shot.x = Math.max(left, Math.min(right, shot.x));
+              shot.vx *= -1;
+            }
+            if (shot.y < top || shot.y > bottom) {
+              shot.y = Math.max(top, Math.min(bottom, shot.y));
+              shot.vy *= -1;
+            }
+          }
+          for (const enemy of state.enemies) {
+            if (enemy.dead) continue;
+            if (Math.hypot(enemy.x - shot.x, enemy.y - shot.y) < enemy.radius + shot.radius) {
+              damageEnemy(enemy, shot.damage, shot.vx, shot.vy);
+              if (shot.splash) {
+                addEffect(shot.x, shot.y, shot.splash, shot.color, .3);
+                for (const other of state.enemies) {
+                  if (other !== enemy && !other.dead && Math.hypot(other.x - shot.x, other.y - shot.y) < shot.splash) damageEnemy(other, shot.damage * .65, 0, 0);
+                }
+                shot.life = 0;
+              } else if (shot.bounce > 0) {
+                shot.bounce--;
+                shot.vx *= -1;
+                shot.vy *= -1;
+              } else if (shot.pierce > 0) {
+                shot.pierce--;
+              } else {
+                shot.life = 0;
+              }
+              break;
+            }
+          }
+        }
+        state.projectiles = state.projectiles.filter(s => s.life > 0);
+
+        for (const shot of state.hostileShots) {
+          shot.x += shot.vx * dt;
+          shot.y += shot.vy * dt;
+          shot.life -= dt;
+          if (p.invulnerable <= 0 && Math.hypot(p.x - shot.x, p.y - shot.y) < p.radius + shot.radius) {
+            const reduction = Math.min(.85, (state.passives.manager || 0) * .12 + p.armor);
+            p.hp -= shot.damage * (1 - reduction);
+            playSound("damage");
+            p.invulnerable = .48;
+            shot.life = 0;
+            addEffect(p.x, p.y, 48, "#ff526f", .28);
+            if (p.hp <= 0) { p.hp = 0; finishGame(false); }
+          }
+        }
+        state.hostileShots = state.hostileShots.filter(s => s.life > 0);
+
+        for (const gem of state.gems) {
+          const dx = p.x - gem.x, dy = p.y - gem.y;
+          const distance = Math.hypot(dx, dy) || 1;
+          const magnet = p.pickupRange + (state.passives.letters || 0) * 14;
+          if (distance < magnet) {
+            const force = distance < 35 ? 520 : 310;
+            gem.x += dx / distance * force * dt;
+            gem.y += dy / distance * force * dt;
+          }
+          if (distance < p.radius + 9) {
+            state.xp += gem.value * (1 + (state.passives.letters || 0) * .15);
+            gem.collected = true;
+          }
+        }
+        state.gems = state.gems.filter(g => !g.collected);
+
+        for (const chest of state.chests) {
+          if (Math.hypot(p.x - chest.x, p.y - chest.y) < p.radius + chest.radius) {
+            chest.collected = true;
+            if (state.scene === "playing") {
+              state.scene = "levelup";
+              show(ui.level, true);
+              createUpgradeChoices(true);
+            }
+          }
+        }
+        state.chests = state.chests.filter(chest => !chest.collected);
+
+        if (state.xp >= state.nextXp && state.scene === "playing") {
+          state.xp -= state.nextXp;
+          state.level++;
+          state.nextXp = Math.floor(5 + state.level * 3.6);
+          state.scene = "levelup";
+          show(ui.level, true);
+          createUpgradeChoices();
+        }
+
+        state.enemies = state.enemies.filter(e => !e.dead);
+        state.effects.forEach(effect => effect.life -= dt);
+        state.effects = state.effects.filter(effect => effect.life > 0);
+        updateHud();
+      }
+
+      const upgrades = [
+        { id: "damage", name: "神対応の極意", icon: "✨", description: "すべての攻撃ダメージ +20%", apply: () => { state.player.damage *= 1.2; } },
+        { id: "health", name: "楽屋のケータリング", icon: "🧋", description: "メンタルを30回復、最大値 +8", apply: () => { state.player.maxHp += 8; state.player.hp = Math.min(state.player.maxHp, state.player.hp + 30); } },
+        { id: "pickup", name: "王道の輝き", icon: "🌟", description: "サイリウムを集める範囲 +35", apply: () => { state.player.pickupRange += 35; } }
+      ];
+
+      function createUpgradeChoices(isChest) {
+        playSound(isChest ? "chest" : "level");
+        const choices = [];
+        const baseWeapon = baseWeapons[state.player.character.id];
+        const baseLevel = state.weaponLevels[baseWeapon.id] || 1;
+        const availableWeapons = weaponCatalog.filter(w => !state.weaponLevels[w.id] || state.weaponLevels[w.id] < 5);
+        const possible = [...upgrades, ...passiveCatalog.filter(item => {
+          const max = item.id === "manager" ? 5 : 6;
+          return (state.passives[item.id] || 0) < max;
+        }).map(item => ({ ...item, apply: () => {
+          state.passives[item.id] = (state.passives[item.id] || 0) + 1;
+          if (item.id === "boots") state.player.speed *= 1.04;
+          if (item.id === "mic") state.player.attackSpeed *= 1.08;
+        } }))];
+        if (baseLevel < 5) {
+          possible.unshift({
+            id: `base-${baseWeapon.id}`,
+            name: baseWeapon.name,
+            icon: baseWeapon.icon,
+            description: `レベル ${baseLevel} → ${baseLevel + 1} に強化！`,
+            apply: () => { state.weaponLevels[baseWeapon.id] = baseLevel + 1; }
+          });
+        }
+        if (availableWeapons.length && (isChest || Math.random() < .52)) {
+          const weapon = availableWeapons[Math.floor(Math.random() * availableWeapons.length)];
+          possible.unshift({
+            ...weapon,
+            description: state.weaponLevels[weapon.id] ? `レベル ${state.weaponLevels[weapon.id]} → ${state.weaponLevels[weapon.id] + 1} に強化！` : weapon.description,
+            apply: () => { state.weaponLevels[weapon.id] = (state.weaponLevels[weapon.id] || 0) + 1; }
+          });
+        }
+        if (isChest && baseWeapon.id === "heart" && baseLevel >= 5 &&
+            state.passives.buzz > 0 && !state.evolvedWeapons.heart) {
+          possible.unshift({
+            id: "big-bang-love",
+            name: "ビッグバン・ラブ",
+            icon: "💖",
+            description: "ウインク・ハートが極太の全貫通ハートレーザーに覚醒！",
+            apply: () => { state.evolvedWeapons.heart = true; }
+          });
+        }
+        if (isChest) {
+          document.querySelector("#level-screen .eyebrow").textContent = "PRESENT BOX!";
+          document.querySelector("#level-screen h2").textContent = "豪華な差し入れをゲット！";
+          document.querySelector("#level-screen .modal-card > p:not(.eyebrow)").textContent = "特別なファンサを選ぼう";
+        } else {
+          document.querySelector("#level-screen .eyebrow").textContent = "LEVEL UP!";
+          document.querySelector("#level-screen h2").textContent = "次のファンサを選ぼう";
+          document.querySelector("#level-screen .modal-card > p:not(.eyebrow)").textContent = "どの力を伸ばす？";
+        }
+        if (isChest && possible.length) choices.push(possible.shift());
+        const choiceCount = state.player.character.id === "sayu" && Math.random() < .25 ? 4 : 3;
+        while (choices.length < choiceCount && possible.length) {
+          const index = Math.floor(Math.random() * possible.length);
+          choices.push(possible.splice(index, 1)[0]);
+        }
+        ui.options.innerHTML = "";
+        ui.options.classList.toggle("four", choices.length === 4);
+        choices.forEach((choice, index) => {
+          const button = document.createElement("button");
+          button.className = "upgrade";
+          button.type = "button";
+          button.innerHTML = `<span class="upgrade-icon">${choice.icon}</span><small>OPTION ${index + 1}</small><b>${choice.name}</b><small>${choice.description}</small>`;
+          button.addEventListener("click", () => {
+            choice.apply();
+            show(ui.level, false);
+            state.scene = "playing";
+            updateHud();
+          });
+          ui.options.appendChild(button);
+        });
+      }
+
+      function updateHud() {
+        if (!state.player) return;
+        const p = state.player;
+        ui.hp.style.width = `${Math.max(0, p.hp / p.maxHp * 100)}%`;
+        ui.xp.style.width = `${Math.min(100, state.xp / state.nextXp * 100)}%`;
+        ui.timer.textContent = `${formatTime(state.elapsed)} / ${formatTime(state.duration)}`;
+        ui.levelLabel.textContent = `LV ${state.level}`;
+        ui.enemyLabel.textContent = `浄化 ${state.kills}`;
+        if (state.bossSpawned && !state.bossDefeated) ui.goal.textContent = "BOSS BATTLE!";
+        else if (state.elapsed >= state.duration - 20 && !state.bossDefeated) ui.goal.textContent = "FINAL LIVE SOON";
+        else ui.goal.textContent = "LIVE IN PROGRESS";
+      }
+
+      function formatTime(seconds) {
+        const value = Math.min(state.duration, Math.floor(seconds));
+        return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
+      }
+
+      function recordRun(won) {
+        if (state.runRecorded) return 0;
+        const characterId = state.player.character.id;
+        const reward = Math.max(3, Math.floor(state.kills / 5)) + state.stageIndex * 5 + (won ? 20 : 5);
+        profile.cheki += reward;
+        profile.totalKills += state.kills;
+        profile.runs++;
+        profile.idolKills[characterId] = (profile.idolKills[characterId] || 0) + state.kills;
+        for (const [enemyId, count] of Object.entries(state.enemyKills)) {
+          profile.enemyKills[enemyId] = (profile.enemyKills[enemyId] || 0) + count;
+        }
+        if (won) {
+          profile.stageClears[state.stageIndex] = (profile.stageClears[state.stageIndex] || 0) + 1;
+          profile.unlockedStage = Math.max(profile.unlockedStage, Math.min(stages.length - 1, state.stageIndex + 1));
+        }
+        if (profile.idolKills[characterId] >= 100 && !profile.unlockedSkins.includes(`${characterId}-alt`)) {
+          profile.unlockedSkins.push(`${characterId}-alt`);
+        }
+        if (Object.values(state.evolvedWeapons).some(Boolean)) profile.evolvedWeapons++;
+        state.runRecorded = true;
+        saveProfile();
+        renderMetaUI();
+        return reward;
+      }
+
+      function finishGame(won) {
+        if (state.scene === "result") return;
+        const chekiReward = recordRun(won);
+        state.scene = "result";
+        stopMusic(true);
+        playSound(won ? "win" : "lose");
+        show(ui.level, false);
+        show(ui.pause, false);
+        show(ui.result, true);
+        show(ui.pauseButton, false);
+        show(ui.audioToggle, false);
+        ui.result.classList.toggle("win", won);
+        const celebration = document.getElementById("celebration");
+        celebration.innerHTML = "";
+        if (won) {
+          const colors = ["#ff75b7", "#ffd36d", "#8cebd7", "#c5a3ff", "#fff4c2"];
+          for (let i = 0; i < 48; i++) {
+            const piece = document.createElement("i");
+            piece.className = "confetti-piece";
+            piece.style.left = `${Math.random() * 100}%`;
+            piece.style.width = `${5 + Math.random() * 8}px`;
+            piece.style.height = `${8 + Math.random() * 11}px`;
+            piece.style.backgroundColor = colors[i % colors.length];
+            piece.style.animationDelay = `${Math.random() * .8}s`;
+            piece.style.animationDuration = `${2.2 + Math.random() * 1.8}s`;
+            celebration.appendChild(piece);
+          }
+        }
+        document.getElementById("result-icon").textContent = won ? "🎤" : "💔";
+        document.getElementById("result-eyebrow").textContent = won ? "LEGENDARY LIVE" : "LIVE PAUSED";
+        document.getElementById("result-title").textContent = won ? "伝説のライブ成功！" : "活動休止…";
+        document.getElementById("result-stats").innerHTML =
+          `会場：${stages[state.stageIndex].name}<br>ライブ時間：${formatTime(state.elapsed)}<br>浄化した厄介ヲタク：${state.kills}人<br>到達レベル：${state.level}<br>獲得チェキ券：🎟 ${chekiReward}`;
+        show(document.getElementById("next-stage-button"), won && state.stageIndex < stages.length - 1);
+      }
+
+      function draw() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        ctx.clearRect(0, 0, width, height);
+        const p = state.player;
+        if (!p) {
+          drawBackdrop(width, height, 0, 0);
+          requestAnimationFrame(loop);
+          return;
+        }
+        const cameraX = p.x - width / 2;
+        const cameraY = p.y - height / 2;
+        drawBackdrop(width, height, cameraX, cameraY);
+
+        for (const gem of state.gems) {
+          const x = gem.x - cameraX, y = gem.y - cameraY;
+          if (x < -10 || x > width + 10 || y < -10 || y > height + 10) continue;
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(Math.PI / 4);
+          ctx.shadowColor = gem.color;
+          ctx.shadowBlur = 12;
+          ctx.fillStyle = gem.color;
+          ctx.fillRect(-gem.radius / 2, -gem.radius / 2, gem.radius, gem.radius);
+          ctx.restore();
+        }
+
+        for (const prop of state.props) {
+          const x = prop.x - cameraX, y = prop.y - cameraY;
+          if (x < -40 || x > width + 40 || y < -40 || y > height + 40) continue;
+          ctx.font = "28px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(prop.kind === "fountain" ? "⛲" : prop.kind === "barrier" ? "🚧" : "🔊", x, y);
+          if (prop.hp < prop.maxHp) {
+            ctx.fillStyle = "#241722";
+            ctx.fillRect(x - 16, y + 19, 32, 3);
+            ctx.fillStyle = "#ffd46e";
+            ctx.fillRect(x - 16, y + 19, 32 * prop.hp / prop.maxHp, 3);
+          }
+        }
+
+        for (const item of state.recoveries) {
+          const x = item.x - cameraX, y = item.y - cameraY;
+          if (x < -20 || x > width + 20 || y < -20 || y > height + 20) continue;
+          ctx.font = "22px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("🧋", x, y);
+        }
+
+        if (state.hazard) {
+          const x = state.hazard.x - cameraX, y = state.hazard.y - cameraY;
+          ctx.beginPath();
+          ctx.globalAlpha = state.hazard.warning > 0 ? .2 + Math.sin(state.frameTime * 8) * .1 : .28;
+          ctx.fillStyle = state.hazard.warning > 0 ? "#ffd46e" : "#ff543f";
+          ctx.arc(x, y, state.hazard.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.beginPath();
+          ctx.strokeStyle = state.hazard.warning > 0 ? "#ffe58a" : "#ff7252";
+          ctx.lineWidth = 3;
+          ctx.arc(x, y, state.hazard.radius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        for (const chest of state.chests) {
+          const x = chest.x - cameraX, y = chest.y - cameraY;
+          ctx.save();
+          ctx.shadowColor = "#ffd46e";
+          ctx.shadowBlur = 18;
+          ctx.fillStyle = "#d99b43";
+          ctx.fillRect(x - 12, y - 10, 24, 21);
+          ctx.fillStyle = "#ffe28a";
+          ctx.fillRect(x - 12, y - 3, 24, 5);
+          ctx.fillRect(x - 3, y - 2, 6, 8);
+          ctx.restore();
+        }
+
+        for (const shot of state.hostileShots) {
+          const x = shot.x - cameraX, y = shot.y - cameraY;
+          if (x < -20 || x > width + 20 || y < -20 || y > height + 20) continue;
+          ctx.beginPath();
+          ctx.shadowColor = shot.color;
+          ctx.shadowBlur = 15;
+          ctx.fillStyle = shot.color;
+          ctx.arc(x, y, shot.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "#fff";
+          ctx.font = "12px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(shot.label || "!", x, y + 4);
+        }
+
+        for (const shot of state.projectiles) {
+          const x = shot.x - cameraX, y = shot.y - cameraY;
+          if (x < -20 || x > width + 20 || y < -20 || y > height + 20) continue;
+          ctx.beginPath();
+          ctx.shadowColor = shot.color;
+          ctx.shadowBlur = 15;
+          ctx.fillStyle = shot.color;
+          ctx.arc(x, y, shot.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.font = `${shot.radius * 2}px sans-serif`;
+          if (shot.color === "#ff87c2") ctx.fillText("♥", x - shot.radius, y + shot.radius * .7);
+        }
+
+        for (const enemy of state.enemies) drawEnemy(enemy, cameraX, cameraY);
+        for (const effect of state.effects) {
+          const progress = effect.life / effect.total;
+          const x = effect.x - cameraX, y = effect.y - cameraY;
+          if (x < -effect.radius || x > width + effect.radius || y < -effect.radius || y > height + effect.radius) continue;
+          ctx.beginPath();
+          ctx.globalAlpha = progress * .65;
+          ctx.strokeStyle = effect.color;
+          ctx.lineWidth = 3 + progress * 4;
+          ctx.arc(x, y, effect.radius * (1.15 - progress * .15), 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+
+        const px = p.x - cameraX, py = p.y - cameraY;
+        const image = characterImages[p.character.id];
+        ctx.save();
+        ctx.globalAlpha = p.invulnerable > 0 ? .55 + Math.sin(state.frameTime * 28) * .3 : 1;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 22;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(px, py, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        if (image && image.complete && image.naturalWidth > 0) {
+          const scale = Math.min((p.radius * 2) / image.naturalHeight, (p.radius * 2) / image.naturalWidth);
+          const imageWidth = image.naturalWidth * scale;
+          const imageHeight = image.naturalHeight * scale;
+          ctx.drawImage(image, px - imageWidth / 2, py - imageHeight / 2, imageWidth, imageHeight);
+        } else {
+          ctx.font = "25px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(p.character.emoji, px, py - 1);
+        }
+        ctx.restore();
+        if (state.weaponLevels.handshake) {
+          const level = state.weaponLevels.handshake;
+          const hands = Math.min(1 + Math.ceil(level / 2), 4);
+          const orbit = 72 + level * 9;
+          ctx.font = "20px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          for (let i = 0; i < hands; i++) {
+            const angle = state.elapsed * 2.8 + i * Math.PI * 2 / hands;
+            ctx.fillText("🤝", px + Math.cos(angle) * orbit, py + Math.sin(angle) * orbit);
+          }
+        }
+        requestAnimationFrame(loop);
+      }
+
+      function drawBackdrop(width, height, cameraX, cameraY) {
+        const stage = stages[state.stageIndex] || stages[0];
+        ctx.fillStyle = stage.background;
+        ctx.fillRect(0, 0, width, height);
+        const grid = 64;
+        ctx.strokeStyle = stage.grid;
+        ctx.lineWidth = 1;
+        const offsetX = -((cameraX % grid) + grid) % grid;
+        const offsetY = -((cameraY % grid) + grid) % grid;
+        for (let x = offsetX; x < width; x += grid) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+        }
+        for (let y = offsetY; y < height; y += grid) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+        }
+        for (const decor of state.worldDecor) {
+          const x = decor.x - cameraX, y = decor.y - cameraY;
+          if (x < -20 || x > width + 20 || y < -20 || y > height + 20) continue;
+          ctx.beginPath();
+          ctx.fillStyle = "rgba(255,132,195,.10)";
+          ctx.arc(x, y, decor.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        const gradient = ctx.createRadialGradient(width / 2, height / 2, Math.min(width, height) * .13, width / 2, height / 2, Math.max(width, height) * .68);
+        gradient.addColorStop(0, "rgba(17,12,25,0)");
+        gradient.addColorStop(1, "rgba(7,5,12,.5)");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      function drawEnemy(enemy, cameraX, cameraY) {
+        const x = enemy.x - cameraX;
+        const y = enemy.y - cameraY - (enemy.leapTime > 0 ? Math.sin((.42 - enemy.leapTime) / .42 * Math.PI) * 20 : 0);
+        if (x < -enemy.radius - 110 || x > window.innerWidth + enemy.radius + 110 ||
+            y < -enemy.radius - 110 || y > window.innerHeight + enemy.radius + 110) return;
+        ctx.save();
+        ctx.shadowColor = enemy.color;
+        ctx.shadowBlur = enemy.boss ? 22 : 8;
+        ctx.fillStyle = enemy.color;
+        ctx.beginPath();
+        ctx.arc(x, y, enemy.radius, 0, Math.PI * 2);
+        ctx.fill();
+        if (enemy.type === "yell") {
+          ctx.fillStyle = "#fff";
+          ctx.font = "13px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("📣", x, y - enemy.radius - 6);
+        }
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#241722";
+        ctx.beginPath();
+        ctx.arc(x - enemy.radius * .28, y - 2, 2, 0, Math.PI * 2);
+        ctx.arc(x + enemy.radius * .28, y - 2, 2, 0, Math.PI * 2);
+        ctx.fill();
+        if (enemy.boss || enemy.type === "to") {
+          const barWidth = enemy.boss ? 100 : 38;
+          ctx.fillStyle = "#251321";
+          ctx.fillRect(x - barWidth / 2, y - enemy.radius - 11, barWidth, 4);
+          ctx.fillStyle = enemy.boss ? "#ff607d" : "#ffd46e";
+          ctx.fillRect(x - barWidth / 2, y - enemy.radius - 11, barWidth * Math.max(0, enemy.hp / enemy.maxHp), 4);
+        }
+        if (enemy.boss && x > -130 && x < window.innerWidth + 130 && y > -100 && y < window.innerHeight + 100) {
+          ctx.fillStyle = "#fff";
+          ctx.font = "12px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(enemy.name, x, y - enemy.radius - 17);
+        }
+        ctx.restore();
+      }
+
+      function loop(timestamp) {
+        const dt = state.lastTimestamp ? Math.min((timestamp - state.lastTimestamp) / 1000, .04) : 0;
+        state.lastTimestamp = timestamp;
+        if (state.scene === "playing") update(dt);
+        draw();
+      }
+
+      document.addEventListener("click", event => {
+        const button = event.target instanceof Element ? event.target.closest("button") : null;
+        if (button && !button.disabled && button.id !== "audio-toggle") playSound("ui");
+      }, true);
+
+      ui.audioToggle.addEventListener("click", () => {
+        audioEnabled = !audioEnabled;
+        updateAudioToggle();
+        if (audioEnabled) {
+          if (state.scene === "playing") startMusic();
+          playSound("ui");
+        } else {
+          stopMusic(false);
+        }
+      });
+
+      document.getElementById("start-button").addEventListener("click", () => {
+        show(ui.title, false);
+        show(ui.instructions, true);
+      });
+      document.getElementById("begin-live-button").addEventListener("click", startGame);
+      document.getElementById("back-to-select-button").addEventListener("click", () => {
+        show(ui.instructions, false);
+        show(ui.title, true);
+      });
+      document.getElementById("lessons-toggle").addEventListener("click", () => {
+        show(ui.lessonsPanel, ui.lessonsPanel.classList.contains("hidden"));
+        show(ui.collectionPanel, false);
+      });
+      document.getElementById("collection-toggle").addEventListener("click", () => {
+        show(ui.collectionPanel, ui.collectionPanel.classList.contains("hidden"));
+        show(ui.lessonsPanel, false);
+        renderCollection();
+      });
+      document.getElementById("again-button").addEventListener("click", () => {
+        show(ui.result, false);
+        ui.result.classList.remove("win");
+        show(document.getElementById("next-stage-button"), false);
+        show(ui.title, true);
+        show(ui.hud, false);
+        state.scene = "title";
+        buildCharacterCards();
+        renderMetaUI();
+      });
+      document.getElementById("next-stage-button").addEventListener("click", () => {
+        state.selectedStage = Math.min(stages.length - 1, state.stageIndex + 1);
+        show(ui.result, false);
+        ui.result.classList.remove("win");
+        show(document.getElementById("next-stage-button"), false);
+        show(ui.hud, false);
+        show(ui.title, true);
+        state.scene = "title";
+        renderMetaUI();
+      });
+      document.getElementById("pause-button").addEventListener("click", () => {
+        if (state.scene === "playing") {
+          state.scene = "paused";
+          stopMusic(false);
+          show(ui.pause, true);
+        }
+      });
+      document.getElementById("resume-button").addEventListener("click", () => {
+        state.scene = "playing";
+        show(ui.pause, false);
+        startMusic();
+      });
+
+      window.addEventListener("keydown", event => {
+        const key = event.key.toLowerCase();
+        if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) event.preventDefault();
+        keys.add(key);
+        if (key === "escape" && state.scene === "playing") {
+          state.scene = "paused";
+          stopMusic(false);
+          show(ui.pause, true);
+        } else if (key === "escape" && state.scene === "paused") {
+          state.scene = "playing";
+          show(ui.pause, false);
+          startMusic();
+        }
+      });
+      window.addEventListener("keyup", event => keys.delete(event.key.toLowerCase()));
+      window.addEventListener("blur", () => keys.clear());
+      window.addEventListener("resize", resize);
+
+      const joystick = document.getElementById("joystick");
+      const stick = document.getElementById("stick");
+      function moveStick(event) {
+        const rect = joystick.getBoundingClientRect();
+        const dx = event.clientX - (rect.left + rect.width / 2);
+        const dy = event.clientY - (rect.top + rect.height / 2);
+        const distance = Math.hypot(dx, dy);
+        const limit = rect.width * .36;
+        const ratio = Math.min(distance, limit) / (distance || 1);
+        const x = dx * ratio, y = dy * ratio;
+        stick.style.left = `calc(50% + ${x}px)`;
+        stick.style.top = `calc(50% + ${y}px)`;
+        state.joystick.x = x / limit;
+        state.joystick.y = y / limit;
+      }
+      joystick.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        joystick.setPointerCapture(event.pointerId);
+        state.joystick.active = true;
+        state.joystick.pointerId = event.pointerId;
+        moveStick(event);
+      });
+      joystick.addEventListener("pointermove", event => {
+        if (state.joystick.active && event.pointerId === state.joystick.pointerId) moveStick(event);
+      });
+      function resetStick(event) {
+        if (event.pointerId !== state.joystick.pointerId) return;
+        state.joystick.active = false;
+        state.joystick.x = 0; state.joystick.y = 0;
+        stick.style.left = "50%"; stick.style.top = "50%";
+      }
+      joystick.addEventListener("pointerup", resetStick);
+      joystick.addEventListener("pointercancel", resetStick);
+
+      resize();
+      updateAudioToggle();
+      buildCharacterCards();
+      renderMetaUI();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
